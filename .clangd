@@ -1,0 +1,7 @@
+Diagnostics:
+  MissingIncludes: Strict
+  UnusedIncludes: Strict
+#Completion:
+#Uncomment when clang gets updates
+#HeaderInsertion: Never
+
