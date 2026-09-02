@@ -8,14 +8,17 @@
 
 #include "Camera.h"
 #include "Mesh.h"
+#include "MeshingPipeline.h"
 #include "VoxelData.h"
-#include "data_providers/ChunkedDataProvider.h"
 #include "data_providers/FullDataProvider.h"
+#include "data_providers/IVoxelDataProvider.h"
 #include "extractors/NaiveMeshExtractor.h"
 #include "glad/gl.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "masks/Mask.h"
+#include "optimizer/MeshIndexer.h"
+#include "spdlog/spdlog.h"
 #include "transfer_functions/ITransferFunction.h"
 #include "utils.h"
 
@@ -71,17 +74,16 @@ void NaiveRasterRenderer::update_data(VoxelData& data, std::shared_ptr<ITransfer
 
     FullDataProvider provider(data);
     NaiveMeshExtractor extractor;
+    MeshIndexer indexer;
 
-    std::vector<Mesh> meshes = extractor.extract_meshes(provider, transfer_function, mask);
+    MeshingPipeline pipeline(provider, extractor, indexer);
 
-    while (!meshes.empty()) {
-        Mesh& mesh = meshes.back();
-
-        UploadedMesh umesh = mesh::upload_mesh(std::move(mesh));
+    auto callback = [this](Mesh&& mesh) {
+        UploadedMesh umesh = mesh::upload_mesh(std::forward<Mesh>(mesh));
         m_meshes.push_back(umesh);
+    };
 
-        meshes.pop_back();
-    }
+    pipeline.run(callback, transfer_function, mask);
 }
 
 void NaiveRasterRenderer::clear() {
@@ -102,7 +104,7 @@ void NaiveRasterRenderer::render(Camera const& camera) {
 
         glBindVertexArray(mesh.vao);
 
-        glDrawArrays(GL_TRIANGLES, 0, mesh.count);
+        glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, nullptr);
     }
 }
 

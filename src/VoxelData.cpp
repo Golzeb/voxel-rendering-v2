@@ -9,11 +9,16 @@
 #include "glm/ext/vector_float3.hpp"
 #include "glm/ext/vector_int3.hpp"
 
-VoxelData::VoxelData(glm::ivec3 const& size) {
+VoxelData::VoxelData(glm::ivec3 const& size, bool full) {
     m_size = size;
     m_size_chunks = glm::ceil(glm::vec3(size) / float(CHUNK_SIZE));
 
     m_chunks.resize(m_size_chunks.x * m_size_chunks.y * m_size_chunks.z, {});
+    if (full) {
+        for (auto& chunk : m_chunks) {
+            chunk.voxels.resize(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE, std::numeric_limits<Type>::min());
+        }
+    }
 }
 
 void VoxelData::set_voxel(glm::ivec3 const& position, Type value) {

@@ -4,9 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <mutex>
 #include <optional>
-#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -19,9 +17,6 @@
 #include "glm/ext/vector_float4.hpp"
 #include "glm/ext/vector_int3.hpp"
 #include "masks/Mask.h"
-#include "taskflow/core/executor.hpp"
-#include "taskflow/core/taskflow.hpp"
-#include "taskflow/taskflow.hpp"
 #include "transfer_functions/ITransferFunction.h"
 
 void add_quad(Mesh& mesh, std::uint32_t colour, std::array<glm::vec3, 4> corners) {
@@ -51,56 +46,45 @@ void add_cube(Mesh& mesh, std::uint32_t colour, glm::vec3 position) {
     add_quad(mesh, colour, {position010, position110, position111, position011});
 }
 
-std::vector<Mesh> NaiveMeshExtractor::extract_meshes(IVoxelDataProvider& provider,
+std::optional<Mesh> NaiveMeshExtractor::extract_mesh(IVoxelDataProvider::VoxelDataChunk const& chunk,
                                                      std::shared_ptr<ITransferFunction> transfer_function,
                                                      Mask const& mask) {
-    std::vector<Mesh> meshes;
-    std::mutex meshes_mutex;
+    Mesh mesh;
+    std::unordered_map<VoxelData::Type, std::uint32_t> colour_map;
 
-    std::vector<tf::Future<std::optional<Mesh>>> futures;
-    tf::Executor executor{std::thread::hardware_concurrency()};
+    glm::ivec3 const size = chunk.data.size();
 
-    while (auto chunk = provider.next()) {
-        executor.silent_async([chunk, &meshes, &mask, &transfer_function, &meshes_mutex]() {
-            Mesh mesh;
-            std::unordered_map<VoxelData::Type, std::uint32_t> colour_map;
+    VoxelData const& data = chunk.data;
 
-            glm::ivec3 const size = chunk->data.size();
+    for (std::size_t x = 0; x < size.x; x++) {
+        for (std::size_t y = 0; y < size.y; y++) {
+            for (std::size_t z = 0; z < size.z; z++) {
+                VoxelData::Type const voxel_value = data.get_voxel(glm::ivec3{x, y, z});
+                glm::ivec3 const position{x, y, z};
 
-            VoxelData const& data = chunk->data;
+                if (!mask.is_visible(position, voxel_value)) continue;
 
-            for (std::size_t x = 0; x < size.x; x++) {
-                for (std::size_t y = 0; y < size.y; y++) {
-                    for (std::size_t z = 0; z < size.z; z++) {
-                        VoxelData::Type const voxel_value = data.get_voxel(glm::ivec3{x, y, z});
-                        glm::ivec3 const position{x, y, z};
+                std::uint32_t colour;
 
-                        if (!mask.is_visible(position, voxel_value)) continue;
-
-                        std::uint32_t colour;
-
-                        if (colour_map.contains(voxel_value)) {
-                            colour = colour_map[voxel_value];
-                        } else {
-                            colour = mesh.colours.size();
-                            mesh.colours.push_back(glm::vec4(transfer_function->colour(position, voxel_value), 1.0f));
-                            mesh.values.push_back(voxel_value);
-                            colour_map.insert_or_assign(voxel_value, colour);
-                        }
-
-                        add_cube(mesh, colour, position);
-                    }
+                if (colour_map.contains(voxel_value)) {
+                    colour = colour_map[voxel_value];
+                } else {
+                    colour = mesh.colours.size();
+                    mesh.colours.push_back(glm::vec4(transfer_function->colour(position, voxel_value), 1.0f));
+                    mesh.values.push_back(voxel_value);
+                    colour_map.insert_or_assign(voxel_value, colour);
                 }
-            }
 
-            mesh.model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(chunk->position));
-
-            if (mesh.vertices.size() > 0) {
-                std::lock_guard lock(meshes_mutex);
-                meshes.push_back(mesh);
+                add_cube(mesh, colour, position);
             }
-        });
+        }
     }
 
-    return meshes;
+    mesh.model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(chunk.position));
+
+    if (mesh.vertices.size() > 0) {
+        return mesh;
+    }
+
+    return std::nullopt;
 }

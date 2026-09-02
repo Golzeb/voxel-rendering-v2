@@ -1,16 +1,17 @@
 #pragma once
 #include <memory>
-#include <vector>
+#include <optional>
 
 #include "Mesh.h"
 #include "data_providers/IVoxelDataProvider.h"
+#include "extractors/IMeshExtractor.h"
 #include "masks/Mask.h"
 #include "transfer_functions/ITransferFunction.h"
 
-class NaiveMeshExtractor {
+class NaiveMeshExtractor : public IMeshExtractor {
 public:
     NaiveMeshExtractor() = default;
 
-    std::vector<Mesh> extract_meshes(IVoxelDataProvider& provider, std::shared_ptr<ITransferFunction> transfer_function,
-                                     Mask const& mask);
+    std::optional<Mesh> extract_mesh(IVoxelDataProvider::VoxelDataChunk const& chunk,
+                                     std::shared_ptr<ITransferFunction> transfer_function, Mask const& mask) override;
 };

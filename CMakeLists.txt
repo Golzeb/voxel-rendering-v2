@@ -12,6 +12,7 @@ set(SOURCES
     src/loaders.cpp
     src/VoxelData.cpp
     src/Camera.cpp
+    src/MeshingPipeline.cpp
 
     # Masks 
     src/masks/ThresholdMask.cpp
@@ -25,7 +26,10 @@ set(SOURCES
 
     # Extractors
     src/extractors/NaiveMeshExtractor.cpp
-   
+
+    # Optimizers
+    src/optimizer/MeshIndexer.cpp
+
     # Renderers
     src/renderers/NoopRenderer.cpp
     src/renderers/NaiveRasterRenderer.cpp

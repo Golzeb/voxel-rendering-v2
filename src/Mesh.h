@@ -1,6 +1,8 @@
 #pragma once
+#include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 #include "VoxelData.h"
@@ -12,6 +14,37 @@
 struct Vertex {
     glm::vec3 position;
     std::uint32_t colour;
+
+    bool operator==(Vertex const& other) const {
+        return position == other.position && colour == other.colour;
+    }
+};
+
+template <>
+struct std::hash<Vertex> {
+    std::size_t operator()(Vertex const& v) const {
+        std::uint32_t x = std::bit_cast<std::uint32_t>(v.position.x);
+        std::uint32_t y = std::bit_cast<std::uint32_t>(v.position.y);
+        std::uint32_t z = std::bit_cast<std::uint32_t>(v.position.z);
+
+        x = x * 1664525 + 1013904223;
+        y = y * 1664525 + 1013904223;
+        z = z * 1664525 + 1013904223;
+
+        x += y * z;
+        y += z * x;
+        z += x * y;
+
+        x ^= x >> 16;
+        y ^= y >> 16;
+        z ^= z >> 16;
+
+        x += y * z;
+        y += z * x;
+        z += x * y;
+
+        return (std::size_t(x ^ y ^ z) << 32) | v.colour;
+    }
 };
 
 struct Mesh {

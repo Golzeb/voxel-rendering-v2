@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <mutex>
 #include <optional>
 
 #include "VoxelData.h"
@@ -20,4 +21,5 @@ private:
     std::int32_t m_chunk_size;
 
     VoxelData const* p_data;
+    std::mutex m_chunk_mutex;
 };
