@@ -16,6 +16,8 @@
 
 #include "glm/ext/vector_float2.hpp"
 #include "spdlog/spdlog.h"
+#include "taskflow/core/executor.hpp"
+#include "taskflow/taskflow.hpp"
 
 namespace utils {
 std::string load_shader(std::string_view path) {

@@ -3,6 +3,7 @@
 #include "glad/gl.h"
 // clang-format on
 
+#include <atomic>
 #include <bit>
 #include <cstddef>
 #include <functional>
@@ -24,13 +25,13 @@ inline void glNamedBufferData(GLuint buffer, GLsizeiptr size, void const* data, 
     ::glNamedBufferData(buffer, size, data, usage);
 }
 
-inline std::size_t& current_memory() {
-    static std::size_t current_memory = 0;
+inline std::atomic<std::size_t>& current_memory() {
+    static std::atomic<std::size_t> current_memory = 0;
     return current_memory;
 }
 
-inline std::size_t& max_memory() {
-    static std::size_t max_memory = 0;
+inline std::atomic<std::size_t>& max_memory() {
+    static std::atomic<std::size_t> max_memory = 0;
     return max_memory;
 }
 
@@ -60,7 +61,7 @@ public:
         talloc::current_memory() += n * sizeof(value_type);
         if (talloc::current_memory() > std::size_t(KILL_SWITCH) * 1024 * 1024 * 1024)
             throw std::runtime_error("Memory usage higher than 22 GiB");
-        if (talloc::current_memory() > talloc::max_memory()) talloc::max_memory() = talloc::current_memory();
+        if (talloc::current_memory() > talloc::max_memory()) talloc::max_memory().store(talloc::current_memory());
         return static_cast<value_type*>(data);
     }
 

@@ -53,7 +53,7 @@ int main() {
 
     std::shared_ptr<IRenderer> current_renderer = appstate.renderers[std::to_underlying(appstate.current_renderer)];
 
-    auto [data, transfer_function] = loaders::read_vl32("data/bistro_256x256x256.vl32", glm::ivec3{256, 256, 256});
+    auto [data, transfer_function] = loaders::read_vl32("data/bistro_1024x1024x1024.vl32", glm::ivec3{1024, 1024, 1024});
 
     Camera camera (glm::perspective(glm::radians(90.0f), float(IMAGE_WIDTH) / float(IMAGE_HEIGHT), 0.01f, 2000.0f), glm::vec2{-89.0, 89.0});
 
@@ -125,7 +125,6 @@ GLFWwindow* create_window() {
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glViewport(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-    glEnable(GL_CULL_FACE);
 
     return window;
 }

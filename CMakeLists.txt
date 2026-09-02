@@ -27,6 +27,7 @@ set(SOURCES
 
     # Extractors
     src/extractors/NaiveMeshExtractor.cpp
+    src/extractors/FaceCulledGreedyMeshExtractor.cpp
 
     # Optimizers
     src/optimizer/MeshIndexer.cpp

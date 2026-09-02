@@ -101,7 +101,7 @@ void MeshingPipeline::run(std::function<void(Mesh&&)> finalize_callback,
         Mesh mesh;
         {
             std::unique_lock lock(meshes_mutex);
-            c.wait(lock, [&] { return producer_done; });
+            c.wait(lock, [&] { return producer_done || !meshes.empty(); });
 
             if (meshes.empty() && producer_done) break;
 

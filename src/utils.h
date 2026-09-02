@@ -9,6 +9,7 @@
 // clang-format on
 
 #include "glm/ext/vector_float2.hpp"
+#include "taskflow/core/executor.hpp"
 
 namespace utils {
 [[nodiscard]]
