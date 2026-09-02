@@ -1,7 +1,9 @@
 #include "utils.h"
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <format>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -26,6 +28,20 @@ std::string load_shader(std::string_view path) {
     file.close();
 
     return ss.str();
+}
+
+std::string human_readable_size(std::size_t size) {
+    constexpr std::array<std::size_t, 3> SIZES = {1024, 1024 * 1024, 1024 * 1024 * 1024};
+
+    if (size > SIZES[2]) {
+        return std::format("{} GiB", size / float(SIZES[2]));
+    } else if (size > SIZES[1]) {
+        return std::format("{} MiB", size / float(SIZES[1]));
+    } else if (size > SIZES[0]) {
+        return std::format("{} KiB", size / float(SIZES[0]));
+    } else {
+        return std::format("{} B", size);
+    }
 }
 
 void check_shader_compilation_errors(GLuint shader_name) {

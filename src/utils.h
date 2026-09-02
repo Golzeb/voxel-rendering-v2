@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include <string>
 #include <string_view>
 
@@ -12,6 +13,9 @@
 namespace utils {
 [[nodiscard]]
 std::string load_shader(std::string_view path);
+
+[[nodiscard]]
+std::string human_readable_size(std::size_t size);
 
 void check_shader_compilation_errors(GLuint shader_name);
 

@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <vector>
 
 #include "VoxelData.h"
+#include "allocators/TrackingAllocator.h"
 #include "glad/gl.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/vector_float3.hpp"
@@ -49,10 +49,10 @@ struct std::hash<Vertex> {
 
 struct Mesh {
     glm::mat4 model_matrix;
-    std::vector<Vertex> vertices;
-    std::vector<std::uint32_t> indices;
-    std::vector<glm::vec4> colours;
-    std::vector<VoxelData::Type> values;
+    tracked_vector<Vertex> vertices;
+    tracked_vector<std::uint32_t> indices;
+    tracked_vector<glm::vec4> colours;
+    tracked_vector<VoxelData::Type> values;
 };
 
 struct UploadedMesh {
@@ -63,12 +63,13 @@ struct UploadedMesh {
     std::size_t count;
 
     GLuint colour_buffer;
-    std::vector<VoxelData::Type> values;
+    tracked_vector<VoxelData::Type> values;
 };
 
 namespace mesh {
 inline UploadedMesh upload_mesh(Mesh&& mesh) {
-    UploadedMesh umesh;
+    UploadedMesh umesh{};
+
     umesh.model_matrix = mesh.model_matrix;
     umesh.values = mesh.values;
 

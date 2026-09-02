@@ -2,13 +2,12 @@
 
 #include <cstdint>
 #include <optional>
-#include <unordered_map>
-#include <vector>
 
 #include "Mesh.h"
+#include "allocators/TrackingAllocator.h"
 
 std::optional<Mesh> MeshIndexer::optimize_mesh(Mesh&& mesh) {
-    std::unordered_map<Vertex, std::uint32_t> vertex_indices;
+    tracked_umap<Vertex, std::uint32_t> vertex_indices;
     Mesh new_mesh;
 
     new_mesh.model_matrix = mesh.model_matrix;

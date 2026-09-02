@@ -7,9 +7,9 @@
 #include <mutex>
 #include <thread>
 #include <utility>
-#include <vector>
 
 #include "Mesh.h"
+#include "allocators/TrackingAllocator.h"
 #include "data_providers/IVoxelDataProvider.h"
 #include "extractors/IMeshExtractor.h"
 #include "masks/Mask.h"
@@ -32,13 +32,13 @@ void MeshingPipeline::run(std::function<void(Mesh&&)> finalize_callback,
     tf::Executor executor;
     tf::Taskflow taskflow;
 
-    std::vector<IVoxelDataProvider::VoxelDataChunk> data_chunks;
+    tracked_vector<IVoxelDataProvider::VoxelDataChunk> data_chunks;
     data_chunks.resize(num_lines);
 
-    std::vector<Mesh> extractor_output;
+    tracked_vector<Mesh> extractor_output;
     extractor_output.resize(num_lines);
 
-    std::vector<Mesh> meshes;
+    tracked_vector<Mesh> meshes;
     std::mutex meshes_mutex;
     std::condition_variable c;
 

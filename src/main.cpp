@@ -22,6 +22,7 @@
 #include "renderers/NaiveRasterRenderer.h"
 #include "renderers/NoopRenderer.h"
 #include "spdlog/spdlog.h"
+#include "allocators/TrackingAllocator.h"
 
 enum class Renderer : int {
     NOOP = 0,
@@ -78,6 +79,8 @@ int main() {
 
     current_renderer->init();
     current_renderer->update_data(data, transfer_function, ThresholdMask(0, true));
+    
+    spdlog::info("{}", utils::human_readable_size(*talloc::max_memory()));
 
     float delta_time = 0.0f; 
     while (!glfwWindowShouldClose(appstate.window)) {

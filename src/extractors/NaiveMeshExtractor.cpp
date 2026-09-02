@@ -5,11 +5,10 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <unordered_map>
-#include <vector>
 
 #include "Mesh.h"
 #include "VoxelData.h"
+#include "allocators/TrackingAllocator.h"
 #include "data_providers/IVoxelDataProvider.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -50,7 +49,7 @@ std::optional<Mesh> NaiveMeshExtractor::extract_mesh(IVoxelDataProvider::VoxelDa
                                                      std::shared_ptr<ITransferFunction> transfer_function,
                                                      Mask const& mask) {
     Mesh mesh;
-    std::unordered_map<VoxelData::Type, std::uint32_t> colour_map;
+    tracked_umap<VoxelData::Type, std::uint32_t> colour_map;
 
     glm::ivec3 const size = chunk.data.size();
 
