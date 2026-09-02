@@ -8,8 +8,27 @@ add_subdirectory(external)
 
 set(SOURCES
     src/main.cpp
+    src/utils.cpp
+    src/loaders.cpp
     src/VoxelData.cpp
+    src/Camera.cpp
+
+    # Masks 
+    src/masks/ThresholdMask.cpp
+    
+    # Providers
+    src/data_providers/FullDataProvider.cpp
+    src/data_providers/ChunkedDataProvider.cpp
+
+    # Transfer functions
+    src/transfer_functions/ValueColourMapping.cpp
+
+    # Extractors
+    src/extractors/NaiveMeshExtractor.cpp
+   
+    # Renderers
     src/renderers/NoopRenderer.cpp
+    src/renderers/NaiveRasterRenderer.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

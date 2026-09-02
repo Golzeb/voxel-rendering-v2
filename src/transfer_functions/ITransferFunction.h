@@ -5,5 +5,6 @@
 
 class ITransferFunction {
 public:
+    virtual ~ITransferFunction() = default;
     virtual glm::vec3 colour(glm::ivec3 const& voxel_position, VoxelData::Type voxel_value) = 0;
 };
