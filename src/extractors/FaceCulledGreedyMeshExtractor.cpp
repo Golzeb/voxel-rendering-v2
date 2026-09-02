@@ -16,14 +16,14 @@
 #include "glm/ext/vector_float3.hpp"
 #include "glm/ext/vector_float4.hpp"
 #include "glm/ext/vector_int3.hpp"
-#include "masks/Mask.h"
+#include "masks/IMask.h"
 #include "taskflow/core/executor.hpp"
 #include "taskflow/taskflow.hpp"
 #include "transfer_functions/ITransferFunction.h"
 
 std::optional<Mesh> FaceCulledGreedyMeshExtractor::extract_mesh(IVoxelDataProvider::VoxelDataChunk const& chunk,
                                                                 std::shared_ptr<ITransferFunction> transfer_function,
-                                                                Mask const& mask) {
+                                                                IMask const& mask) {
     std::array<std::int32_t, 3> data_size = {
         chunk.data.size().x,
         chunk.data.size().y,

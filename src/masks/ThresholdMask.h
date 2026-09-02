@@ -1,9 +1,9 @@
 #pragma once
 #include "VoxelData.h"
 #include "glm/ext/vector_int3.hpp"
-#include "masks/Mask.h"
+#include "masks/IMask.h"
 
-class ThresholdMask : public Mask {
+class ThresholdMask : public IMask {
 public:
     bool is_visible(glm::ivec3 const& position, VoxelData::Type voxel_value) const override;
 

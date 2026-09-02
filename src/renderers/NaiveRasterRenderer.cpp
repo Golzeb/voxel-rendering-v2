@@ -15,7 +15,7 @@
 #include "glad/gl.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#include "masks/Mask.h"
+#include "masks/IMask.h"
 #include "optimizer/MeshIndexer.h"
 #include "transfer_functions/ITransferFunction.h"
 #include "utils.h"
@@ -65,7 +65,7 @@ void NaiveRasterRenderer::deinit() {
 }
 
 void NaiveRasterRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
-                                      Mask const& mask) {
+                                      IMask const& mask) {
     for (std::size_t i = 0; i < m_meshes.size(); i++) {
         mesh::destroy_mesh(m_meshes[i]);
     }

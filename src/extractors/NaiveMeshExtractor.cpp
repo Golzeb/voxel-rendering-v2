@@ -14,12 +14,12 @@
 #include "glm/ext/vector_float3.hpp"
 #include "glm/ext/vector_float4.hpp"
 #include "glm/ext/vector_int3.hpp"
-#include "masks/Mask.h"
+#include "masks/IMask.h"
 #include "transfer_functions/ITransferFunction.h"
 
 std::optional<Mesh> NaiveMeshExtractor::extract_mesh(IVoxelDataProvider::VoxelDataChunk const& chunk,
                                                      std::shared_ptr<ITransferFunction> transfer_function,
-                                                     Mask const& mask) {
+                                                     IMask const& mask) {
     Mesh mesh;
     tracked_umap<VoxelData::Type, std::uint32_t> colour_map;
 

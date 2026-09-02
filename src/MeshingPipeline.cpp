@@ -12,7 +12,7 @@
 #include "allocators/TrackingAllocator.h"
 #include "data_providers/IVoxelDataProvider.h"
 #include "extractors/IMeshExtractor.h"
-#include "masks/Mask.h"
+#include "masks/IMask.h"
 #include "optimizer/IMeshOptimizer.h"
 #include "taskflow/algorithm/pipeline.hpp"
 #include "taskflow/core/executor.hpp"
@@ -27,7 +27,7 @@ MeshingPipeline::MeshingPipeline(IVoxelDataProvider& provider, IMeshExtractor& e
 }
 
 void MeshingPipeline::run(std::function<void(Mesh&&)> finalize_callback,
-                          std::shared_ptr<ITransferFunction> transfer_function, Mask const& mask,
+                          std::shared_ptr<ITransferFunction> transfer_function, IMask const& mask,
                           std::size_t num_lines) {
     tf::Executor executor;
     tf::Taskflow taskflow;

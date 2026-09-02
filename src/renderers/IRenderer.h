@@ -3,7 +3,7 @@
 
 #include "Camera.h"
 #include "VoxelData.h"
-#include "masks/Mask.h"
+#include "masks/IMask.h"
 #include "transfer_functions/ITransferFunction.h"
 
 class IRenderer {
@@ -14,7 +14,7 @@ public:
     virtual void deinit() = 0;
 
     virtual void update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
-                             Mask const& mask) = 0;
+                             IMask const& mask) = 0;
 
     virtual void clear() = 0;
     virtual void render(Camera const& camera) = 0;

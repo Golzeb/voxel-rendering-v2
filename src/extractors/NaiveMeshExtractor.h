@@ -5,7 +5,7 @@
 #include "Mesh.h"
 #include "data_providers/IVoxelDataProvider.h"
 #include "extractors/IMeshExtractor.h"
-#include "masks/Mask.h"
+#include "masks/IMask.h"
 #include "transfer_functions/ITransferFunction.h"
 
 class NaiveMeshExtractor : public IMeshExtractor {
@@ -13,5 +13,5 @@ public:
     NaiveMeshExtractor() = default;
 
     std::optional<Mesh> extract_mesh(IVoxelDataProvider::VoxelDataChunk const& chunk,
-                                     std::shared_ptr<ITransferFunction> transfer_function, Mask const& mask) override;
+                                     std::shared_ptr<ITransferFunction> transfer_function, IMask const& mask) override;
 };
