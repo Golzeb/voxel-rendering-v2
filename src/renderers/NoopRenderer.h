@@ -19,7 +19,5 @@ public:
     void clear() override;
     void render(Camera const& camera) override;
 
-    void update() override;
-
     char const* name() override;
 };

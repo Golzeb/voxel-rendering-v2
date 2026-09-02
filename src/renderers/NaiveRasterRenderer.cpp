@@ -106,8 +106,6 @@ void NaiveRasterRenderer::render(Camera const& camera) {
     }
 }
 
-void NaiveRasterRenderer::update() {}
-
 char const* NaiveRasterRenderer::name() {
     return "Raster renderer";
 }

@@ -2,6 +2,9 @@
 #include <memory>
 #include <vector>
 
+// clang-format off
+#include "glad/gl.h"
+// clang-format on 
 #include "Camera.h"
 #include "Mesh.h"
 #include "VoxelData.h"
@@ -18,8 +21,6 @@ public:
 
     void clear() override;
     void render(Camera const& camera) override;
-
-    void update() override;
 
     char const* name() override;
 

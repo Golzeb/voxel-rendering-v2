@@ -8,7 +8,8 @@
 //clang-format on
 
 #include "glm/trigonometric.hpp"
-#include "transfer_functions/ITransferFunction.h"
+#include "gui/controls.h"
+#include "imgui.h"
 #include "utils.h"
 #include "Camera.h"
 #include "config.h"
@@ -23,31 +24,11 @@
 #include "renderers/NoopRenderer.h"
 #include "spdlog/spdlog.h"
 #include "allocators/TrackingAllocator.h"
-
-enum class Renderer : int {
-    NOOP = 0,
-    NAIVE_RASTER,
-    COUNT,
-};
-
-struct ApplicationState {
-    GLFWwindow* window;
-
-    bool mouse_locked;
-    glm::vec2 previous_mouse_position;
-
-    Renderer current_renderer;
-    std::vector<std::shared_ptr<IRenderer>> renderers;
-    std::vector<const char*> renderer_names;
-
-    std::unique_ptr<ITransferFunction> transfer_function;
-
-    float camera_speed;
-};
+#include "App.h"
 
 GLFWwindow* create_window();
 void populate_renderers(std::vector<std::shared_ptr<IRenderer>>& renderers, std::vector<const char*>& names);
-void handle_camera_input(ApplicationState& appstate, Camera& camera, float delta_time); 
+void handle_camera_input(ApplicationState& appstate, Camera& camera); 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 int main() {
@@ -56,14 +37,13 @@ int main() {
     ApplicationState appstate{
         .window = create_window(),
         .mouse_locked = true,
-        .previous_mouse_position = glm::vec2(0.0f),
-        
         .current_renderer = Renderer::NOOP,
-        .renderers = {},
-        .renderer_names = {},
-
         .camera_speed = 40.0f,
+        .draw_controls = true,
     };
+
+    gui::init(appstate.window);
+
     glfwSetWindowUserPointer(appstate.window, &appstate);
     appstate.previous_mouse_position = utils::get_cursor_position(appstate.window);
 
@@ -80,25 +60,43 @@ int main() {
     current_renderer->init();
     current_renderer->update_data(data, transfer_function, ThresholdMask(0, true));
     
-    spdlog::info("{}", utils::human_readable_size(*talloc::max_memory()));
+    spdlog::info("{}", utils::human_readable_size(talloc::max_memory()));
+    spdlog::info("{}", utils::human_readable_size(talloc::current_gpu_memory()));
 
-    float delta_time = 0.0f; 
+    GLuint query;
+    glGenQueries(1, &query);
+
     while (!glfwWindowShouldClose(appstate.window)) {
         float const frame_start = glfwGetTime();
 
-        handle_camera_input(appstate, camera, delta_time);
+        handle_camera_input(appstate, camera);
         camera.update();
+
+        glFinish();
+        glBeginQuery(GL_TIME_ELAPSED, query);
 
         current_renderer->clear();
         current_renderer->render(camera);
-        current_renderer->update();
+        
+        glFinish();
+        glEndQuery(GL_TIME_ELAPSED);
+
+        if(appstate.draw_controls) {
+            gui::render(appstate);
+        }
 
         glfwSwapBuffers(appstate.window);
         glfwPollEvents();
 
-        delta_time = glfwGetTime() - frame_start;
+        appstate.delta_time = glfwGetTime() - frame_start;
+
+        GLint64 gpu_time_elapsed;
+        glGetQueryObjecti64v(query, GL_QUERY_RESULT, &gpu_time_elapsed);
+
+        appstate.gpu_time = gpu_time_elapsed * 1e-9f;
     }
 
+    gui::deinit();
     glfwDestroyWindow(appstate.window);
     glfwTerminate();
 }
@@ -143,7 +141,7 @@ void populate_renderers(std::vector<std::shared_ptr<IRenderer>>& renderers, std:
     names[std::to_underlying(Renderer::NAIVE_RASTER)] = renderers[std::to_underlying(Renderer::NAIVE_RASTER)]->name();
 }
 
-void handle_camera_input(ApplicationState& appstate, Camera& camera, float delta_time) {
+void handle_camera_input(ApplicationState& appstate, Camera& camera) {
     if (appstate.mouse_locked) {
         glm::vec2 current_mouse_position = utils::get_cursor_position(appstate.window);
         glm::vec2 mouse_delta = current_mouse_position - appstate.previous_mouse_position;
@@ -153,27 +151,27 @@ void handle_camera_input(ApplicationState& appstate, Camera& camera, float delta
     }
 
     if (glfwGetKey(appstate.window, GLFW_KEY_W) == GLFW_PRESS) {
-        camera.update_position(camera.forward() * appstate.camera_speed * delta_time);
+        camera.update_position(camera.forward() * appstate.camera_speed * appstate.delta_time);
     }
 
     if (glfwGetKey(appstate.window, GLFW_KEY_S) == GLFW_PRESS) {
-        camera.update_position(-camera.forward() * appstate.camera_speed * delta_time);
+        camera.update_position(-camera.forward() * appstate.camera_speed * appstate.delta_time);
     }
 
     if (glfwGetKey(appstate.window, GLFW_KEY_A) == GLFW_PRESS) {
-        camera.update_position(-camera.right() * appstate.camera_speed * delta_time);
+        camera.update_position(-camera.right() * appstate.camera_speed * appstate.delta_time);
     }
 
     if (glfwGetKey(appstate.window, GLFW_KEY_D) == GLFW_PRESS) {
-        camera.update_position(camera.right() * appstate.camera_speed * delta_time);
+        camera.update_position(camera.right() * appstate.camera_speed * appstate.delta_time);
     }
 
     if (glfwGetKey(appstate.window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        camera.update_position(glm::vec3(0.0f, 1.0f, 0.0f) * appstate.camera_speed * delta_time);
+        camera.update_position(glm::vec3(0.0f, 1.0f, 0.0f) * appstate.camera_speed * appstate.delta_time);
     }
 
     if (glfwGetKey(appstate.window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        camera.update_position(glm::vec3(0.0f, -1.0f, 0.0f) * appstate.camera_speed * delta_time);
+        camera.update_position(glm::vec3(0.0f, -1.0f, 0.0f) * appstate.camera_speed * appstate.delta_time);
     }
 }
 
@@ -181,15 +179,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     ApplicationState* appstate = (ApplicationState*)glfwGetWindowUserPointer(window);
     if(key == GLFW_KEY_F && action == GLFW_PRESS) {
         appstate->mouse_locked = !appstate->mouse_locked;
+        
         if (appstate->mouse_locked) {
             appstate->previous_mouse_position = utils::get_cursor_position(window);
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         } else {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
+
+        ImGui::GetIO().WantSetMousePos = !appstate->mouse_locked;
     }
 
     if(key == GLFW_KEY_Q && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    if(key == GLFW_KEY_G && action == GLFW_PRESS) {
+        appstate->draw_controls = !appstate->draw_controls;
     }
 }

@@ -19,7 +19,5 @@ public:
     virtual void clear() = 0;
     virtual void render(Camera const& camera) = 0;
 
-    virtual void update() = 0;
-
     virtual char const* name() = 0;
 };

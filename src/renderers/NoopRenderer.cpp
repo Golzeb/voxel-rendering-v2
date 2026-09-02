@@ -19,8 +19,6 @@ void NoopRenderer::clear() {
 }
 void NoopRenderer::render(Camera const& camera) {}
 
-void NoopRenderer::update() {}
-
 char const* NoopRenderer::name() {
     return "Noop Renderer";
 }

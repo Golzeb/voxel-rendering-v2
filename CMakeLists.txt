@@ -13,6 +13,7 @@ set(SOURCES
     src/VoxelData.cpp
     src/Camera.cpp
     src/MeshingPipeline.cpp
+    src/gui/controls.cpp
 
     # Masks 
     src/masks/ThresholdMask.cpp

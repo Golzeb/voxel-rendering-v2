@@ -88,16 +88,17 @@ inline UploadedMesh upload_mesh(Mesh&& mesh) {
     glVertexArrayAttribBinding(umesh.vao, 0, 0);
     glVertexArrayAttribBinding(umesh.vao, 1, 0);
 
-    glNamedBufferData(umesh.vbo, sizeof(Vertex) * mesh.vertices.size(), mesh.vertices.data(), GL_STATIC_DRAW);
-    glNamedBufferData(umesh.colour_buffer, sizeof(glm::vec4) * mesh.colours.size(), mesh.colours.data(),
-                      GL_STATIC_DRAW);
+    talloc::glNamedBufferData(umesh.vbo, sizeof(Vertex) * mesh.vertices.size(), mesh.vertices.data(), GL_STATIC_DRAW);
+    talloc::glNamedBufferData(umesh.colour_buffer, sizeof(glm::vec4) * mesh.colours.size(), mesh.colours.data(),
+                              GL_STATIC_DRAW);
 
     umesh.count = mesh.vertices.size();
 
     if (mesh.indices.size() > 0) {
         glCreateBuffers(1, &umesh.ebo);
         glVertexArrayElementBuffer(umesh.vao, umesh.ebo);
-        glNamedBufferData(umesh.ebo, sizeof(std::uint32_t) * mesh.indices.size(), mesh.indices.data(), GL_STATIC_DRAW);
+        talloc::glNamedBufferData(umesh.ebo, sizeof(std::uint32_t) * mesh.indices.size(), mesh.indices.data(),
+                                  GL_STATIC_DRAW);
         umesh.count = mesh.indices.size();
     }
 
