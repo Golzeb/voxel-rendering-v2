@@ -31,6 +31,7 @@ set(SOURCES
 
     # Optimizers
     src/optimizer/MeshIndexer.cpp
+    src/optimizer/NoopOptimizer.cpp
 
     # Renderers
     src/renderers/NoopRenderer.cpp

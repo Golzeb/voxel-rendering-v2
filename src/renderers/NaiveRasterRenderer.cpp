@@ -10,13 +10,16 @@
 #include "Mesh.h"
 #include "MeshingPipeline.h"
 #include "VoxelData.h"
+#include "data_providers/ChunkedDataProvider.h"
 #include "data_providers/FullDataProvider.h"
+#include "extractors/FaceCulledGreedyMeshExtractor.h"
 #include "extractors/NaiveMeshExtractor.h"
 #include "glad/gl.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "masks/IMask.h"
 #include "optimizer/MeshIndexer.h"
+#include "optimizer/NoopOptimizer.h"
 #include "transfer_functions/ITransferFunction.h"
 #include "utils.h"
 
@@ -72,9 +75,9 @@ void NaiveRasterRenderer::update_data(VoxelData& data, std::shared_ptr<ITransfer
 
     FullDataProvider provider(data);
     NaiveMeshExtractor extractor;
-    MeshIndexer indexer;
+    NoopOptimizer optimizer;
 
-    MeshingPipeline pipeline(provider, extractor, indexer);
+    MeshingPipeline pipeline(provider, extractor, optimizer);
 
     auto callback = [this](Mesh&& mesh) {
         UploadedMesh umesh = mesh::upload_mesh(std::forward<Mesh>(mesh));
@@ -102,7 +105,7 @@ void NaiveRasterRenderer::render(Camera const& camera) {
 
         glBindVertexArray(mesh.vao);
 
-        glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, nullptr);
+        glDrawArrays(GL_TRIANGLES, 0, mesh.count);
     }
 }
 

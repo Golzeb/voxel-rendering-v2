@@ -53,15 +53,15 @@ int main() {
 
     std::shared_ptr<IRenderer> current_renderer = appstate.renderers[std::to_underlying(appstate.current_renderer)];
 
-    auto [data, transfer_function] = loaders::read_vl32("data/bistro_1024x1024x1024.vl32", glm::ivec3{1024, 1024, 1024});
+    auto [data, transfer_function] = loaders::read_vl32("data/sponza_512x512x512.vl32", glm::ivec3{512, 512, 512});
 
     Camera camera (glm::perspective(glm::radians(90.0f), float(IMAGE_WIDTH) / float(IMAGE_HEIGHT), 0.01f, 2000.0f), glm::vec2{-89.0, 89.0});
 
     current_renderer->init();
     current_renderer->update_data(data, transfer_function, ThresholdMask(0, true));
     
-    spdlog::info("{}", utils::human_readable_size(talloc::max_memory()));
-    spdlog::info("{}", utils::human_readable_size(talloc::current_gpu_memory()));
+    spdlog::info("RAM: {}", utils::human_readable_size(talloc::max_memory()));
+    spdlog::info("VRAM: {}", utils::human_readable_size(talloc::current_gpu_memory()));
 
     GLuint query;
     glGenQueries(1, &query);
