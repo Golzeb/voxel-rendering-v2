@@ -1,5 +1,9 @@
 #pragma once
 
+// clang-format off
+#include "allocators/TrackingAllocator.h"
+// clang-format on
+
 #include "App.h"
 #include "GLFW/glfw3.h"
 

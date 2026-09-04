@@ -38,7 +38,7 @@ int main() {
     ApplicationState appstate{
         .window = create_window(),
         .mouse_locked = true,
-        .current_renderer = Renderer::NOOP,
+        .selected_renderer = Renderer::NOOP,
         .camera_speed = 40.0f,
         .draw_controls = true,
     };
@@ -48,18 +48,20 @@ int main() {
     glfwSetWindowUserPointer(appstate.window, &appstate);
     appstate.previous_mouse_position = utils::get_cursor_position(appstate.window);
 
-    appstate.current_renderer = Renderer::INDEXED_RASTER;
+    appstate.selected_renderer = Renderer::INDEXED_RASTER;
 
     populate_renderers(appstate.renderers, appstate.renderer_names);
 
-    std::shared_ptr<IRenderer> current_renderer = appstate.renderers[std::to_underlying(appstate.current_renderer)];
-
-    auto [data, transfer_function] = loaders::read_vl32("data/sponza_512x512x512.vl32", glm::ivec3{512, 512, 512});
+    auto [data, transfer_function] = loaders::read_vl32("data/sponza_256x256x256.vl32", glm::ivec3{256, 256, 256});
+    appstate.data = data;
+    appstate.transfer_function = transfer_function;
+    appstate.mask = std::make_shared<ThresholdMask>(0, true);
 
     Camera camera (glm::perspective(glm::radians(90.0f), float(IMAGE_WIDTH) / float(IMAGE_HEIGHT), 0.01f, 2000.0f), glm::vec2{-89.0, 89.0});
 
-    current_renderer->init();
-    current_renderer->update_data(data, transfer_function, ThresholdMask(0, true));
+    appstate.current_renderer = appstate.renderers[std::to_underlying(appstate.selected_renderer)];
+    appstate.current_renderer->init();
+    appstate.current_renderer->update_data(data, transfer_function, *appstate.mask);
     
     spdlog::info("RAM: {}", utils::human_readable_size(talloc::max_memory()));
     spdlog::info("VRAM: {}", utils::human_readable_size(talloc::current_gpu_memory()));
@@ -76,8 +78,8 @@ int main() {
         glFinish();
         glBeginQuery(GL_TIME_ELAPSED, query);
 
-        current_renderer->clear();
-        current_renderer->render(camera);
+        appstate.current_renderer->clear();
+        appstate.current_renderer->render(camera);
         
         glFinish();
         glEndQuery(GL_TIME_ELAPSED);

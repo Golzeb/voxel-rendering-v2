@@ -3,8 +3,11 @@
 #include <vector>
 
 #include "GLFW/glfw3.h"
+#include "VoxelData.h"
 #include "glm/ext/vector_float2.hpp"
+#include "masks/IMask.h"
 #include "renderers/IRenderer.h"
+#include "transfer_functions/ITransferFunction.h"
 
 enum class Renderer : int {
     NOOP = 0,
@@ -16,12 +19,17 @@ enum class Renderer : int {
 struct ApplicationState {
     GLFWwindow* window;
 
+    VoxelData data;
+
     bool mouse_locked = true;
     glm::vec2 previous_mouse_position = glm::vec2(0.0f);
 
-    Renderer current_renderer = Renderer::NOOP;
+    Renderer selected_renderer = Renderer::NOOP;
     std::vector<std::shared_ptr<IRenderer>> renderers{};
     std::vector<char const*> renderer_names{};
+    std::shared_ptr<IRenderer> current_renderer{};
+    std::shared_ptr<ITransferFunction> transfer_function{};
+    std::shared_ptr<IMask> mask{};
 
     float camera_speed = 40.0f;
 
