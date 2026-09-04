@@ -10,15 +10,12 @@
 #include "Mesh.h"
 #include "MeshingPipeline.h"
 #include "VoxelData.h"
-#include "data_providers/ChunkedDataProvider.h"
 #include "data_providers/FullDataProvider.h"
-#include "extractors/FaceCulledGreedyMeshExtractor.h"
 #include "extractors/NaiveMeshExtractor.h"
 #include "glad/gl.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "masks/IMask.h"
-#include "optimizer/MeshIndexer.h"
 #include "optimizer/NoopOptimizer.h"
 #include "transfer_functions/ITransferFunction.h"
 #include "utils.h"
@@ -110,5 +107,5 @@ void NaiveRasterRenderer::render(Camera const& camera) {
 }
 
 char const* NaiveRasterRenderer::name() {
-    return "Raster renderer";
+    return "Naive raster renderer";
 }

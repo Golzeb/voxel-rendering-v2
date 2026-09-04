@@ -36,6 +36,7 @@ set(SOURCES
     # Renderers
     src/renderers/NoopRenderer.cpp
     src/renderers/NaiveRasterRenderer.cpp
+    src/renderers/IndexedRasterRenderer.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

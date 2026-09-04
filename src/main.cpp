@@ -10,6 +10,7 @@
 #include "glm/trigonometric.hpp"
 #include "gui/controls.h"
 #include "imgui.h"
+#include "renderers/IndexedRasterRenderer.h"
 #include "utils.h"
 #include "Camera.h"
 #include "config.h"
@@ -47,7 +48,7 @@ int main() {
     glfwSetWindowUserPointer(appstate.window, &appstate);
     appstate.previous_mouse_position = utils::get_cursor_position(appstate.window);
 
-    appstate.current_renderer = Renderer::NAIVE_RASTER;
+    appstate.current_renderer = Renderer::INDEXED_RASTER;
 
     populate_renderers(appstate.renderers, appstate.renderer_names);
 
@@ -138,6 +139,9 @@ void populate_renderers(std::vector<std::shared_ptr<IRenderer>>& renderers, std:
 
     renderers[std::to_underlying(Renderer::NAIVE_RASTER)] = std::make_shared<NaiveRasterRenderer>();
     names[std::to_underlying(Renderer::NAIVE_RASTER)] = renderers[std::to_underlying(Renderer::NAIVE_RASTER)]->name();
+
+    renderers[std::to_underlying(Renderer::INDEXED_RASTER)] = std::make_shared<IndexedRasterRenderer>();
+    names[std::to_underlying(Renderer::INDEXED_RASTER)] = renderers[std::to_underlying(Renderer::INDEXED_RASTER)]->name();
 }
 
 void handle_camera_input(ApplicationState& appstate, Camera& camera) {

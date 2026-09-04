@@ -9,6 +9,7 @@
 enum class Renderer : int {
     NOOP = 0,
     NAIVE_RASTER,
+    INDEXED_RASTER,
     COUNT,
 };
 
