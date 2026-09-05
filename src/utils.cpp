@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <format>
@@ -16,8 +17,6 @@
 
 #include "glm/ext/vector_float2.hpp"
 #include "spdlog/spdlog.h"
-#include "taskflow/core/executor.hpp"
-#include "taskflow/taskflow.hpp"
 
 namespace utils {
 std::string load_shader(std::string_view path) {
@@ -65,5 +64,14 @@ glm::vec2 get_cursor_position(GLFWwindow* window) {
     glfwGetCursorPos(window, &x, &y);
 
     return glm::vec2{x, y};
+}
+
+std::chrono::time_point<std::chrono::steady_clock> time_start() {
+    static std::chrono::steady_clock clock{};
+    return clock.now();
+}
+
+float time_count(std::chrono::time_point<std::chrono::steady_clock> const& start) {
+    return std::chrono::duration<float>(time_start() - start).count();
 }
 }  // namespace utils

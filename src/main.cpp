@@ -21,7 +21,6 @@
 #include "renderers/IRenderer.h"
 #include "renderers/NoopRenderer.h"
 #include "spdlog/spdlog.h"
-#include "allocators/TrackingAllocator.h"
 #include "App.h"
 
 GLFWwindow* create_window();
@@ -55,9 +54,6 @@ int main() {
     appstate.mask = std::make_shared<ThresholdMask>(0, true);
 
     Camera camera (glm::perspective(glm::radians(90.0f), float(IMAGE_WIDTH) / float(IMAGE_HEIGHT), 0.01f, 2000.0f), glm::vec2{-89.0, 89.0});
-    
-    spdlog::info("RAM: {}", utils::human_readable_size(talloc::max_memory()));
-    spdlog::info("VRAM: {}", utils::human_readable_size(talloc::current_gpu_memory()));
 
     GLuint query;
     glGenQueries(1, &query);

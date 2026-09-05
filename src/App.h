@@ -45,5 +45,7 @@ struct ApplicationState {
     float delta_time = 0.0f;
     float gpu_time = 0.0f;
 
+    float load_time = 0.0f;
+
     bool draw_controls = false;
 };

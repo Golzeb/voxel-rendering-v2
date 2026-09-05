@@ -17,7 +17,6 @@
 #include "renderers/InstancedRasterRenderer.h"
 #include "renderers/NoopRenderer.h"
 #include "renderers/RasterRenderer.h"
-#include "spdlog/spdlog.h"
 #include "utils.h"
 
 namespace gui {
@@ -78,6 +77,8 @@ void render(ApplicationState& appstate) {
         }
     }
 
+    ImGui::Dummy({0, 10});
+
     ImGui::Combo("Renderer", (int*)&appstate.selected_renderer, appstate.renderer_names.data(),
                  appstate.renderer_names.size());
 
@@ -120,11 +121,17 @@ void render(ApplicationState& appstate) {
         talloc::reset();
 
         appstate.current_renderer->init();
-        appstate.current_renderer->update_data(appstate.data, appstate.transfer_function, appstate.mask);
 
-        spdlog::info("Used RAM: {}", utils::human_readable_size(talloc::max_memory()));
-        spdlog::info("Used VRAM: {}", utils::human_readable_size(talloc::current_gpu_memory()));
+        auto start = utils::time_start();
+        appstate.current_renderer->update_data(appstate.data, appstate.transfer_function, appstate.mask);
+        appstate.load_time = utils::time_count(start);
     }
+
+    ImGui::Dummy({0, 10});
+
+    ImGui::LabelText("Peak RAM", "%s", utils::human_readable_size(talloc::max_memory()).c_str());
+    ImGui::LabelText("Used VRAM", "%s", utils::human_readable_size(talloc::current_gpu_memory()).c_str());
+    ImGui::LabelText("Load time", "%.04fms", appstate.load_time);
 
     ImGui::End();
 

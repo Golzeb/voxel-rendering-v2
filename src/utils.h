@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <cstddef>
 #include <string>
 #include <string_view>
@@ -9,7 +10,6 @@
 // clang-format on
 
 #include "glm/ext/vector_float2.hpp"
-#include "taskflow/core/executor.hpp"
 
 namespace utils {
 [[nodiscard]]
@@ -21,4 +21,9 @@ std::string human_readable_size(std::size_t size);
 void check_shader_compilation_errors(GLuint shader_name);
 
 glm::vec2 get_cursor_position(GLFWwindow* window);
+
+[[nodiscard]] std::chrono::time_point<std::chrono::steady_clock> time_start();
+
+[[nodiscard]]
+float time_count(std::chrono::time_point<std::chrono::steady_clock> const& start);
 }  // namespace utils
