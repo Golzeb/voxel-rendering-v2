@@ -12,5 +12,5 @@ public:
     virtual ~IMeshExtractor() = default;
     virtual std::optional<Mesh> extract_mesh(IVoxelDataProvider::VoxelDataChunk const& chunk,
                                              std::shared_ptr<ITransferFunction> transfer_function,
-                                             IMask const& mask) = 0;
+                                             std::shared_ptr<IMask> mask) = 0;
 };

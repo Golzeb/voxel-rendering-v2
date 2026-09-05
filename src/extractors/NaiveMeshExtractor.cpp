@@ -19,7 +19,7 @@
 
 std::optional<Mesh> NaiveMeshExtractor::extract_mesh(IVoxelDataProvider::VoxelDataChunk const& chunk,
                                                      std::shared_ptr<ITransferFunction> transfer_function,
-                                                     IMask const& mask) {
+                                                     std::shared_ptr<IMask> mask) {
     Mesh mesh;
     tracked_umap<VoxelData::Type, std::uint32_t> colour_map;
 
@@ -33,7 +33,7 @@ std::optional<Mesh> NaiveMeshExtractor::extract_mesh(IVoxelDataProvider::VoxelDa
                 VoxelData::Type const voxel_value = data.get_voxel(glm::ivec3{x, y, z});
                 glm::ivec3 const position{x, y, z};
 
-                if (!mask.is_visible(position, voxel_value)) continue;
+                if (!mask->is_visible(position, voxel_value)) continue;
 
                 std::uint32_t colour;
 

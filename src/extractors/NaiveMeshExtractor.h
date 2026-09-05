@@ -13,5 +13,6 @@ public:
     NaiveMeshExtractor() = default;
 
     std::optional<Mesh> extract_mesh(IVoxelDataProvider::VoxelDataChunk const& chunk,
-                                     std::shared_ptr<ITransferFunction> transfer_function, IMask const& mask) override;
+                                     std::shared_ptr<ITransferFunction> transfer_function,
+                                     std::shared_ptr<IMask> mask) override;
 };

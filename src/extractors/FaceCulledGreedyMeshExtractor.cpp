@@ -23,7 +23,7 @@
 
 std::optional<Mesh> FaceCulledGreedyMeshExtractor::extract_mesh(IVoxelDataProvider::VoxelDataChunk const& chunk,
                                                                 std::shared_ptr<ITransferFunction> transfer_function,
-                                                                IMask const& mask) {
+                                                                std::shared_ptr<IMask> mask) {
     std::array<std::int32_t, 3> data_size = {
         chunk.data.size().x,
         chunk.data.size().y,
@@ -80,8 +80,8 @@ std::optional<Mesh> FaceCulledGreedyMeshExtractor::extract_mesh(IVoxelDataProvid
                         } else {
                             VoxelData::Type voxel_current =
                                 chunk.data.get_voxel(glm::ivec3{current_pos[0], current_pos[1], current_pos[2]});
-                            current = mask.is_visible(glm::vec3{current_pos[0], current_pos[1], current_pos[2]},
-                                                      voxel_current);
+                            current = mask->is_visible(glm::vec3{current_pos[0], current_pos[1], current_pos[2]},
+                                                       voxel_current);
                             if (current) voxel_types[n] = voxel_current;
                         }
 
@@ -90,9 +90,9 @@ std::optional<Mesh> FaceCulledGreedyMeshExtractor::extract_mesh(IVoxelDataProvid
                         } else {
                             VoxelData::Type voxel_compare = chunk.data.get_voxel(glm::ivec3{
                                 current_pos[0] + offset[0], current_pos[1] + offset[1], current_pos[2] + offset[2]});
-                            compare = mask.is_visible(glm::vec3{current_pos[0] + offset[0], current_pos[1] + offset[1],
-                                                                current_pos[2] + offset[2]},
-                                                      voxel_compare);
+                            compare = mask->is_visible(glm::vec3{current_pos[0] + offset[0], current_pos[1] + offset[1],
+                                                                 current_pos[2] + offset[2]},
+                                                       voxel_compare);
                             if (compare) voxel_types[n] = voxel_compare;
                         }
 

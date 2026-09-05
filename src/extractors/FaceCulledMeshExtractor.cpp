@@ -20,7 +20,7 @@
 
 std::optional<Mesh> FaceCulledMeshExtractor::extract_mesh(IVoxelDataProvider::VoxelDataChunk const& chunk,
                                                           std::shared_ptr<ITransferFunction> transfer_function,
-                                                          IMask const& mask) {
+                                                          std::shared_ptr<IMask> mask) {
     Mesh mesh;
     tracked_umap<VoxelData::Type, std::uint32_t> colour_map;
 
@@ -34,7 +34,7 @@ std::optional<Mesh> FaceCulledMeshExtractor::extract_mesh(IVoxelDataProvider::Vo
                 VoxelData::Type const voxel_value = data.get_voxel(glm::ivec3{x, y, z});
                 glm::ivec3 const position{x, y, z};
 
-                if (!mask.is_visible(position, voxel_value)) continue;
+                if (!mask->is_visible(position, voxel_value)) continue;
 
                 std::uint32_t colour;
 
@@ -50,19 +50,19 @@ std::optional<Mesh> FaceCulledMeshExtractor::extract_mesh(IVoxelDataProvider::Vo
                 std::array<bool, 6> neighbours{};
 
                 neighbours[0] =
-                    (x != 0 && mask.is_visible(glm::vec3{x - 1, y, z}, data.get_voxel(glm::ivec3{x - 1, y, z})));
+                    (x != 0 && mask->is_visible(glm::vec3{x - 1, y, z}, data.get_voxel(glm::ivec3{x - 1, y, z})));
                 neighbours[1] = (x < data.size().x - 1 &&
-                                 mask.is_visible(glm::vec3{x + 1, y, z}, data.get_voxel(glm::ivec3{x + 1, y, z})));
+                                 mask->is_visible(glm::vec3{x + 1, y, z}, data.get_voxel(glm::ivec3{x + 1, y, z})));
 
                 neighbours[2] =
-                    (y != 0 && mask.is_visible(glm::vec3{x, y - 1, z}, data.get_voxel(glm::ivec3{x, y - 1, z})));
+                    (y != 0 && mask->is_visible(glm::vec3{x, y - 1, z}, data.get_voxel(glm::ivec3{x, y - 1, z})));
                 neighbours[3] = (y < data.size().y - 1 &&
-                                 mask.is_visible(glm::vec3{x, y + 1, z}, data.get_voxel(glm::ivec3{x, y + 1, z})));
+                                 mask->is_visible(glm::vec3{x, y + 1, z}, data.get_voxel(glm::ivec3{x, y + 1, z})));
 
                 neighbours[4] =
-                    (z != 0 && mask.is_visible(glm::vec3{x, y, z - 1}, data.get_voxel(glm::ivec3{x, y, z - 1})));
+                    (z != 0 && mask->is_visible(glm::vec3{x, y, z - 1}, data.get_voxel(glm::ivec3{x, y, z - 1})));
                 neighbours[5] = (z < data.size().z - 1 &&
-                                 mask.is_visible(glm::vec3{x, y, z + 1}, data.get_voxel(glm::ivec3{x, y, z + 1})));
+                                 mask->is_visible(glm::vec3{x, y, z + 1}, data.get_voxel(glm::ivec3{x, y, z + 1})));
 
                 mesh::add_cube(mesh, colour, position, neighbours);
             }
