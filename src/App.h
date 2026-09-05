@@ -31,6 +31,7 @@ struct ApplicationState {
     std::vector<char const*> renderer_names{"Noop renderer", "Raster rendrer"};
     RasterRenderer::Mode raster_renderer_mode;
     bool back_face_culling = false;
+    bool wireframe = false;
 
     std::shared_ptr<IRenderer> current_renderer{};
     std::shared_ptr<ITransferFunction> transfer_function{};

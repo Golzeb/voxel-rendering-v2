@@ -50,6 +50,14 @@ void render(ApplicationState& appstate) {
         }
     }
 
+    if (ImGui::Checkbox("Wireframe", &appstate.wireframe)) {
+        if (appstate.wireframe) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        } else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+    }
+
     if (appstate.selected_renderer == Renderer::RASTER) {
         ImGui::Checkbox("Indexed", &appstate.raster_renderer_mode.indexed);
         ImGui::Checkbox("Chunked", &appstate.raster_renderer_mode.chunked);
