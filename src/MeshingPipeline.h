@@ -9,7 +9,7 @@
 #include "data_providers/IVoxelDataProvider.h"
 #include "extractors/IMeshExtractor.h"
 #include "masks/IMask.h"
-#include "optimizer/IMeshOptimizer.h"
+#include "optimizers/IMeshOptimizer.h"
 #include "transfer_functions/ITransferFunction.h"
 class MeshingPipeline {
 public:

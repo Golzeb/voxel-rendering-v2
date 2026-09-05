@@ -1,4 +1,6 @@
-#include "NaiveRasterRenderer.h"
+#include "RasterRenderer.h"
+
+#include <GL/gl.h>
 
 #include <cstddef>
 #include <memory>
@@ -10,17 +12,28 @@
 #include "Mesh.h"
 #include "MeshingPipeline.h"
 #include "VoxelData.h"
+#include "data_providers/ChunkedDataProvider.h"
 #include "data_providers/FullDataProvider.h"
+#include "data_providers/IVoxelDataProvider.h"
+#include "extractors/FaceCulledGreedyMeshExtractor.h"
+#include "extractors/FaceCulledMeshExtractor.h"
+#include "extractors/IMeshExtractor.h"
 #include "extractors/NaiveMeshExtractor.h"
 #include "glad/gl.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "masks/IMask.h"
-#include "optimizer/NoopOptimizer.h"
+#include "optimizers/IMeshOptimizer.h"
+#include "optimizers/MeshIndexer.h"
+#include "optimizers/NoopMeshOptimizer.h"
 #include "transfer_functions/ITransferFunction.h"
 #include "utils.h"
 
-void NaiveRasterRenderer::init() {
+RasterRenderer::RasterRenderer(Mode const& mode) {
+    m_mode = mode;
+}
+
+void RasterRenderer::init() {
     glEnable(GL_DEPTH_TEST);
 
     m_shader_program = glCreateProgram();
@@ -54,7 +67,7 @@ void NaiveRasterRenderer::init() {
     }
 }
 
-void NaiveRasterRenderer::deinit() {
+void RasterRenderer::deinit() {
     for (std::size_t i = 0; i < m_meshes.size(); i++) {
         mesh::destroy_mesh(m_meshes[i]);
     }
@@ -64,17 +77,40 @@ void NaiveRasterRenderer::deinit() {
     glDisable(GL_DEPTH_TEST);
 }
 
-void NaiveRasterRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
-                                      IMask const& mask) {
+void RasterRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
+                                 IMask const& mask) {
     for (std::size_t i = 0; i < m_meshes.size(); i++) {
         mesh::destroy_mesh(m_meshes[i]);
     }
 
-    FullDataProvider provider(data);
-    NaiveMeshExtractor extractor;
-    NoopOptimizer optimizer;
+    std::unique_ptr<IVoxelDataProvider> provider;
 
-    MeshingPipeline pipeline(provider, extractor, optimizer);
+    if (m_mode.chunked) {
+        provider = std::make_unique<ChunkedDataProvider>(data, m_mode.chunk_size);
+    } else {
+        provider = std::make_unique<FullDataProvider>(data);
+    }
+
+    std::unique_ptr<IMeshExtractor> extractor;
+    if (m_mode.greedy_mesh) {
+        extractor = std::make_unique<FaceCulledGreedyMeshExtractor>();
+    } else {
+        if (m_mode.face_culled) {
+            extractor = std::make_unique<FaceCulledMeshExtractor>();
+        } else {
+            extractor = std::make_unique<NaiveMeshExtractor>();
+        }
+    }
+
+    std::unique_ptr<IMeshOptimizer> optimizer;
+
+    if (m_mode.indexed) {
+        optimizer = std::make_unique<MeshIndexer>();
+    } else {
+        optimizer = std::make_unique<NoopMeshOptimizer>();
+    }
+
+    MeshingPipeline pipeline(*provider, *extractor, *optimizer);
 
     auto callback = [this](Mesh&& mesh) {
         UploadedMesh umesh = mesh::upload_mesh(std::forward<Mesh>(mesh));
@@ -84,11 +120,11 @@ void NaiveRasterRenderer::update_data(VoxelData& data, std::shared_ptr<ITransfer
     pipeline.run(callback, transfer_function, mask);
 }
 
-void NaiveRasterRenderer::clear() {
+void RasterRenderer::clear() {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
-void NaiveRasterRenderer::render(Camera const& camera) {
+void RasterRenderer::render(Camera const& camera) {
     glUseProgram(m_shader_program);
 
     GLint vp_location = glGetUniformLocation(m_shader_program, "u_vp");
@@ -102,10 +138,14 @@ void NaiveRasterRenderer::render(Camera const& camera) {
 
         glBindVertexArray(mesh.vao);
 
-        glDrawArrays(GL_TRIANGLES, 0, mesh.count);
+        if (m_mode.indexed) {
+            glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, nullptr);
+        } else {
+            glDrawArrays(GL_TRIANGLES, 0, mesh.count);
+        }
     }
 }
 
-char const* NaiveRasterRenderer::name() {
-    return "Naive raster renderer";
+char const* RasterRenderer::name() {
+    return "Raster renderer";
 }

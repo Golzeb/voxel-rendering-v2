@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -12,8 +13,18 @@
 #include "renderers/IRenderer.h"
 #include "transfer_functions/ITransferFunction.h"
 
-class IndexedRasterRenderer : public IRenderer {
+class RasterRenderer : public IRenderer {
 public:
+    struct Mode {
+        bool indexed = false;
+        bool face_culled = false;
+        bool greedy_mesh = false;
+        bool chunked = false;
+        std::int32_t chunk_size = 0;
+    };
+public:
+    RasterRenderer(Mode const& mode) ;
+    
     void init() override;
     void deinit() override;
 
@@ -25,6 +36,8 @@ public:
     char const* name() override;
 
 private:
+    Mode m_mode;
+
     GLuint m_shader_program;
     std::vector<UploadedMesh> m_meshes;
 };

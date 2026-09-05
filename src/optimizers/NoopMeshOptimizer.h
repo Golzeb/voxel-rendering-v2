@@ -2,11 +2,11 @@
 #include <optional>
 
 #include "Mesh.h"
-#include "optimizer/IMeshOptimizer.h"
+#include "optimizers/IMeshOptimizer.h"
 
-class NoopOptimizer : public IMeshOptimizer {
+class NoopMeshOptimizer : public IMeshOptimizer {
 public:
-    NoopOptimizer() = default;
+    NoopMeshOptimizer() = default;
 
     std::optional<Mesh> optimize_mesh(Mesh&& mesh) override;
 };

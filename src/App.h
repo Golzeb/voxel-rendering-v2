@@ -2,6 +2,10 @@
 #include <memory>
 #include <vector>
 
+// clang-format off
+#include "renderers/RasterRenderer.h"
+// clang-format on
+
 #include "GLFW/glfw3.h"
 #include "VoxelData.h"
 #include "glm/ext/vector_float2.hpp"
@@ -11,8 +15,7 @@
 
 enum class Renderer : int {
     NOOP = 0,
-    NAIVE_RASTER,
-    INDEXED_RASTER,
+    RASTER,
     COUNT,
 };
 
@@ -25,8 +28,10 @@ struct ApplicationState {
     glm::vec2 previous_mouse_position = glm::vec2(0.0f);
 
     Renderer selected_renderer = Renderer::NOOP;
-    std::vector<std::shared_ptr<IRenderer>> renderers{};
-    std::vector<char const*> renderer_names{};
+    std::vector<char const*> renderer_names{"Noop renderer", "Raster rendrer"};
+    RasterRenderer::Mode raster_renderer_mode;
+    bool back_face_culling = false;
+
     std::shared_ptr<IRenderer> current_renderer{};
     std::shared_ptr<ITransferFunction> transfer_function{};
     std::shared_ptr<IMask> mask{};

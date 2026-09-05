@@ -123,7 +123,8 @@ inline void add_quad(Mesh& mesh, std::uint32_t colour, std::array<glm::vec3, 4> 
     mesh.vertices.push_back({corners[2], colour});
 }
 
-inline void add_cube(Mesh& mesh, std::uint32_t colour, glm::vec3 position) {
+inline void add_cube(Mesh& mesh, std::uint32_t colour, glm::vec3 position,
+                     std::array<bool, 6> const& neighbours = {false, false, false, false, false, false}) {
     glm::vec3 const position000 = position;
     glm::vec3 const position001 = position + glm::vec3(0.0f, 0.0f, 1.0f);
     glm::vec3 const position010 = position + glm::vec3(0.0f, 1.0f, 0.0f);
@@ -133,12 +134,12 @@ inline void add_cube(Mesh& mesh, std::uint32_t colour, glm::vec3 position) {
     glm::vec3 const position110 = position + glm::vec3(1.0f, 1.0f, 0.0f);
     glm::vec3 const position111 = position + glm::vec3(1.0f, 1.0f, 1.0f);
 
-    add_quad(mesh, colour, {position000, position100, position110, position010});
-    add_quad(mesh, colour, {position001, position000, position010, position011});
-    add_quad(mesh, colour, {position100, position101, position111, position110});
-    add_quad(mesh, colour, {position101, position001, position011, position111});
-    add_quad(mesh, colour, {position100, position000, position001, position101});
-    add_quad(mesh, colour, {position010, position110, position111, position011});
+    if (!neighbours[0]) add_quad(mesh, colour, {position001, position000, position010, position011});
+    if (!neighbours[1]) add_quad(mesh, colour, {position100, position101, position111, position110});
+    if (!neighbours[2]) add_quad(mesh, colour, {position100, position000, position001, position101});
+    if (!neighbours[3]) add_quad(mesh, colour, {position010, position110, position111, position011});
+    if (!neighbours[4]) add_quad(mesh, colour, {position000, position100, position110, position010});
+    if (!neighbours[5]) add_quad(mesh, colour, {position101, position001, position011, position111});
 }
 
 }  // namespace mesh

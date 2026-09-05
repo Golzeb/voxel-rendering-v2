@@ -13,7 +13,7 @@
 #include "data_providers/IVoxelDataProvider.h"
 #include "extractors/IMeshExtractor.h"
 #include "masks/IMask.h"
-#include "optimizer/IMeshOptimizer.h"
+#include "optimizers/IMeshOptimizer.h"
 #include "taskflow/algorithm/pipeline.hpp"
 #include "taskflow/core/executor.hpp"
 #include "taskflow/core/taskflow.hpp"

@@ -28,15 +28,15 @@ set(SOURCES
     # Extractors
     src/extractors/NaiveMeshExtractor.cpp
     src/extractors/FaceCulledGreedyMeshExtractor.cpp
+    src/extractors/FaceCulledMeshExtractor.cpp
 
     # Optimizers
-    src/optimizer/MeshIndexer.cpp
-    src/optimizer/NoopOptimizer.cpp
+    src/optimizers/MeshIndexer.cpp
+    src/optimizers/NoopMeshOptimizer.cpp
 
     # Renderers
     src/renderers/NoopRenderer.cpp
-    src/renderers/NaiveRasterRenderer.cpp
-    src/renderers/IndexedRasterRenderer.cpp
+    src/renderers/RasterRenderer.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

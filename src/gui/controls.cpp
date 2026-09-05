@@ -1,6 +1,6 @@
 #include "controls.h"
 
-#include <utility>
+#include <memory>
 
 // clang-format off
 #include "allocators/TrackingAllocator.h"
@@ -11,6 +11,8 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "renderers/NoopRenderer.h"
+#include "renderers/RasterRenderer.h"
 #include "spdlog/spdlog.h"
 #include "utils.h"
 
@@ -39,11 +41,43 @@ void render(ApplicationState& appstate) {
     ImGui::Dummy({0, 10});
 
     ImGui::Combo("Renderer", (int*)&appstate.selected_renderer, appstate.renderer_names.data(),
-                 appstate.renderers.size());
+                 appstate.renderer_names.size());
+    if (ImGui::Checkbox("Back face culling", &appstate.back_face_culling)) {
+        if (appstate.back_face_culling) {
+            glEnable(GL_CULL_FACE);
+        } else {
+            glDisable(GL_CULL_FACE);
+        }
+    }
+
+    if (appstate.selected_renderer == Renderer::RASTER) {
+        ImGui::Checkbox("Indexed", &appstate.raster_renderer_mode.indexed);
+        ImGui::Checkbox("Chunked", &appstate.raster_renderer_mode.chunked);
+        if (appstate.raster_renderer_mode.chunked) {
+            ImGui::SliderInt("Chunk size", &appstate.raster_renderer_mode.chunk_size, 0, 512);
+        }
+
+        if (!appstate.raster_renderer_mode.greedy_mesh) {
+            ImGui::Checkbox("Face culled", &appstate.raster_renderer_mode.face_culled);
+        }
+        if (!appstate.raster_renderer_mode.face_culled) {
+            ImGui::Checkbox("Greedy mesh", &appstate.raster_renderer_mode.greedy_mesh);
+        }
+    }
 
     if (ImGui::Button("Update renderer")) {
         appstate.current_renderer->deinit();
-        appstate.current_renderer = appstate.renderers[std::to_underlying(appstate.selected_renderer)];
+
+        switch (appstate.selected_renderer) {
+            case Renderer::NOOP:
+                appstate.current_renderer = std::make_shared<NoopRenderer>();
+                break;
+            case Renderer::RASTER:
+                appstate.current_renderer = std::make_shared<RasterRenderer>(appstate.raster_renderer_mode);
+                break;
+            case Renderer::COUNT:
+                break;
+        }
 
         talloc::reset();
 

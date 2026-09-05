@@ -2,7 +2,7 @@
 #include <optional>
 
 #include "Mesh.h"
-#include "optimizer/IMeshOptimizer.h"
+#include "optimizers/IMeshOptimizer.h"
 
 class MeshIndexer : public IMeshOptimizer {
 public:

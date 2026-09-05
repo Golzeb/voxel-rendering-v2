@@ -1,5 +1,4 @@
 #include <memory>
-#include <utility>
 #include <vector>
 
 // clang-format off
@@ -10,7 +9,6 @@
 #include "glm/trigonometric.hpp"
 #include "gui/controls.h"
 #include "imgui.h"
-#include "renderers/IndexedRasterRenderer.h"
 #include "utils.h"
 #include "Camera.h"
 #include "config.h"
@@ -21,7 +19,6 @@
 #include "loaders.h"
 #include "masks/ThresholdMask.h"
 #include "renderers/IRenderer.h"
-#include "renderers/NaiveRasterRenderer.h"
 #include "renderers/NoopRenderer.h"
 #include "spdlog/spdlog.h"
 #include "allocators/TrackingAllocator.h"
@@ -48,9 +45,9 @@ int main() {
     glfwSetWindowUserPointer(appstate.window, &appstate);
     appstate.previous_mouse_position = utils::get_cursor_position(appstate.window);
 
-    appstate.selected_renderer = Renderer::INDEXED_RASTER;
+    appstate.selected_renderer = Renderer::NOOP;
+    appstate.current_renderer = std::make_shared<NoopRenderer>();
 
-    populate_renderers(appstate.renderers, appstate.renderer_names);
 
     auto [data, transfer_function] = loaders::read_vl32("data/sponza_256x256x256.vl32", glm::ivec3{256, 256, 256});
     appstate.data = data;
@@ -58,10 +55,6 @@ int main() {
     appstate.mask = std::make_shared<ThresholdMask>(0, true);
 
     Camera camera (glm::perspective(glm::radians(90.0f), float(IMAGE_WIDTH) / float(IMAGE_HEIGHT), 0.01f, 2000.0f), glm::vec2{-89.0, 89.0});
-
-    appstate.current_renderer = appstate.renderers[std::to_underlying(appstate.selected_renderer)];
-    appstate.current_renderer->init();
-    appstate.current_renderer->update_data(data, transfer_function, *appstate.mask);
     
     spdlog::info("RAM: {}", utils::human_readable_size(talloc::max_memory()));
     spdlog::info("VRAM: {}", utils::human_readable_size(talloc::current_gpu_memory()));
@@ -130,20 +123,6 @@ GLFWwindow* create_window() {
     glViewport(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     return window;
-}
-
-void populate_renderers(std::vector<std::shared_ptr<IRenderer>>& renderers, std::vector<const char*>& names) {
-    renderers.resize(std::to_underlying(Renderer::COUNT), {});
-    names.resize(std::to_underlying(Renderer::COUNT), nullptr);
-
-    renderers[std::to_underlying(Renderer::NOOP)] = std::make_shared<NoopRenderer>();
-    names[std::to_underlying(Renderer::NOOP)] = renderers[std::to_underlying(Renderer::NOOP)]->name();
-
-    renderers[std::to_underlying(Renderer::NAIVE_RASTER)] = std::make_shared<NaiveRasterRenderer>();
-    names[std::to_underlying(Renderer::NAIVE_RASTER)] = renderers[std::to_underlying(Renderer::NAIVE_RASTER)]->name();
-
-    renderers[std::to_underlying(Renderer::INDEXED_RASTER)] = std::make_shared<IndexedRasterRenderer>();
-    names[std::to_underlying(Renderer::INDEXED_RASTER)] = renderers[std::to_underlying(Renderer::INDEXED_RASTER)]->name();
 }
 
 void handle_camera_input(ApplicationState& appstate, Camera& camera) {
