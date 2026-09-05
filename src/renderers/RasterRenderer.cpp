@@ -1,7 +1,5 @@
 #include "RasterRenderer.h"
 
-#include <GL/gl.h>
-
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -78,7 +76,7 @@ void RasterRenderer::deinit() {
 }
 
 void RasterRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
-                                 IMask const& mask) {
+                                 std::shared_ptr<IMask> mask) {
     for (std::size_t i = 0; i < m_meshes.size(); i++) {
         mesh::destroy_mesh(m_meshes[i]);
     }
@@ -127,12 +125,12 @@ void RasterRenderer::clear() {
 void RasterRenderer::render(Camera const& camera) {
     glUseProgram(m_shader_program);
 
-    GLint vp_location = glGetUniformLocation(m_shader_program, "u_vp");
-    GLint model_location = glGetUniformLocation(m_shader_program, "u_model");
+    GLint vp_location = glGetUniformLocation(m_shader_program, "u_mvp");
+    GLint model_location = glGetUniformLocation(m_shader_program, "u_chunk");
 
     for (auto const& mesh : m_meshes) {
-        glm::mat4 vp = camera.vp() * camera.model();
-        glProgramUniformMatrix4fv(m_shader_program, vp_location, 1, GL_FALSE, glm::value_ptr(vp));
+        glm::mat4 mvp = camera.vp() * camera.model();
+        glProgramUniformMatrix4fv(m_shader_program, vp_location, 1, GL_FALSE, glm::value_ptr(mvp));
         glProgramUniformMatrix4fv(m_shader_program, model_location, 1, GL_FALSE, glm::value_ptr(mesh.model_matrix));
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mesh.colour_buffer);
 

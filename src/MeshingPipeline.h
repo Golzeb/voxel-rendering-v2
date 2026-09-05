@@ -17,7 +17,7 @@ public:
     ~MeshingPipeline() = default;
 
     void run(std::function<void(Mesh&&)> finalize_callback, std::shared_ptr<ITransferFunction> transfer_function,
-             IMask const& mask, std::size_t num_lines = std::thread::hardware_concurrency());
+             std::shared_ptr<IMask> mask, std::size_t num_lines = std::thread::hardware_concurrency());
 
 private:
     IVoxelDataProvider* p_provider;

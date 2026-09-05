@@ -3,6 +3,7 @@
 #include <vector>
 
 // clang-format off
+#include "renderers/InstancedRasterRenderer.h"
 #include "renderers/RasterRenderer.h"
 // clang-format on
 
@@ -16,6 +17,7 @@
 enum class Renderer : int {
     NOOP = 0,
     RASTER,
+    INSTANCED_RASTER,
     COUNT,
 };
 
@@ -28,8 +30,9 @@ struct ApplicationState {
     glm::vec2 previous_mouse_position = glm::vec2(0.0f);
 
     Renderer selected_renderer = Renderer::NOOP;
-    std::vector<char const*> renderer_names{"Noop renderer", "Raster rendrer"};
+    std::vector<char const*> renderer_names{"Noop renderer", "Raster renderer", "Instanced raster renderer"};
     RasterRenderer::Mode raster_renderer_mode;
+    InstancedRasterRenderer::Mode instanced_raster_renderer_mode;
     bool back_face_culling = false;
     bool wireframe = false;
 

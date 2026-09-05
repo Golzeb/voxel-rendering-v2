@@ -23,12 +23,13 @@ public:
         std::int32_t chunk_size = 0;
     };
 public:
-    RasterRenderer(Mode const& mode) ;
+    RasterRenderer(Mode const& mode);
+    ~RasterRenderer() override = default;
     
     void init() override;
     void deinit() override;
 
-    void update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function, IMask const& mask) override;
+    void update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function, std::shared_ptr<IMask> mask) override;
 
     void clear() override;
     void render(Camera const& camera) override;

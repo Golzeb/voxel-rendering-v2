@@ -1,6 +1,9 @@
 #include "controls.h"
 
+#include <array>
+#include <cstddef>
 #include <memory>
+#include <numeric>
 
 // clang-format off
 #include "allocators/TrackingAllocator.h"
@@ -11,6 +14,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "renderers/InstancedRasterRenderer.h"
 #include "renderers/NoopRenderer.h"
 #include "renderers/RasterRenderer.h"
 #include "spdlog/spdlog.h"
@@ -28,20 +32,36 @@ void init(GLFWwindow* window) {
 }
 
 void render(ApplicationState& appstate) {
+    static std::array<float, 120> gpu_time_collect;
+    static std::size_t gpu_time_index = 0;
+
+    static std::array<float, 120> cpu_time_collect;
+    static std::size_t cpu_time_index = 0;
+
+    static std::array<float, 120> delta_time_collect;
+    static std::size_t delta_time_index = 0;
+
+    gpu_time_collect[gpu_time_index++ % 120] = appstate.gpu_time;
+    cpu_time_collect[cpu_time_index++ % 120] = appstate.delta_time - appstate.gpu_time;
+    delta_time_collect[delta_time_index++ % 120] = appstate.delta_time;
+
+    float const cpu_time = std::reduce(cpu_time_collect.begin(), cpu_time_collect.end()) / 120.0f * 1000.0f;
+    float const gpu_time = std::reduce(gpu_time_collect.begin(), gpu_time_collect.end()) / 120.0f * 1000.0f;
+    float const delta_time = std::reduce(delta_time_collect.begin(), delta_time_collect.end()) / 120.0f * 1000.0f;
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
     ImGui::Begin("Controls");
 
-    ImGui::LabelText("Average frame time (CPU)", "%.04fms", (appstate.delta_time - appstate.gpu_time) * 1000.0f);
-    ImGui::LabelText("Average frame time (GPU)", "%.04fms", appstate.gpu_time * 1000.0f);
-    ImGui::LabelText("Average frame time (full)", "%.04fms", appstate.delta_time * 1000.0f);
+    ImGui::LabelText("Frames per second", "%.02f", 1000.0f / delta_time);
+    ImGui::LabelText("Average frame time (CPU)", "%.04fms", cpu_time);
+    ImGui::LabelText("Average frame time (GPU)", "%.04fms", gpu_time);
+    ImGui::LabelText("Average frame time (full)", "%.04fms", delta_time);
 
     ImGui::Dummy({0, 10});
 
-    ImGui::Combo("Renderer", (int*)&appstate.selected_renderer, appstate.renderer_names.data(),
-                 appstate.renderer_names.size());
     if (ImGui::Checkbox("Back face culling", &appstate.back_face_culling)) {
         if (appstate.back_face_culling) {
             glEnable(GL_CULL_FACE);
@@ -58,6 +78,9 @@ void render(ApplicationState& appstate) {
         }
     }
 
+    ImGui::Combo("Renderer", (int*)&appstate.selected_renderer, appstate.renderer_names.data(),
+                 appstate.renderer_names.size());
+
     if (appstate.selected_renderer == Renderer::RASTER) {
         ImGui::Checkbox("Indexed", &appstate.raster_renderer_mode.indexed);
         ImGui::Checkbox("Chunked", &appstate.raster_renderer_mode.chunked);
@@ -71,6 +94,9 @@ void render(ApplicationState& appstate) {
         if (!appstate.raster_renderer_mode.face_culled) {
             ImGui::Checkbox("Greedy mesh", &appstate.raster_renderer_mode.greedy_mesh);
         }
+    } else if (appstate.selected_renderer == Renderer::INSTANCED_RASTER) {
+        ImGui::Checkbox("Indexed", &appstate.instanced_raster_renderer_mode.indexed);
+        ImGui::Checkbox("Face culled", &appstate.instanced_raster_renderer_mode.face_culled);
     }
 
     if (ImGui::Button("Update renderer")) {
@@ -83,6 +109,10 @@ void render(ApplicationState& appstate) {
             case Renderer::RASTER:
                 appstate.current_renderer = std::make_shared<RasterRenderer>(appstate.raster_renderer_mode);
                 break;
+            case Renderer::INSTANCED_RASTER:
+                appstate.current_renderer =
+                    std::make_shared<InstancedRasterRenderer>(appstate.instanced_raster_renderer_mode);
+                break;
             case Renderer::COUNT:
                 break;
         }
@@ -90,9 +120,8 @@ void render(ApplicationState& appstate) {
         talloc::reset();
 
         appstate.current_renderer->init();
-        appstate.current_renderer->update_data(appstate.data, appstate.transfer_function, *appstate.mask);
+        appstate.current_renderer->update_data(appstate.data, appstate.transfer_function, appstate.mask);
 
-        spdlog::info("Loaded {}", appstate.current_renderer->name());
         spdlog::info("Used RAM: {}", utils::human_readable_size(talloc::max_memory()));
         spdlog::info("Used VRAM: {}", utils::human_readable_size(talloc::current_gpu_memory()));
     }

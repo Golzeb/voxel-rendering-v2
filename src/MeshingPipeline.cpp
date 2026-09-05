@@ -27,7 +27,7 @@ MeshingPipeline::MeshingPipeline(IVoxelDataProvider& provider, IMeshExtractor& e
 }
 
 void MeshingPipeline::run(std::function<void(Mesh&&)> finalize_callback,
-                          std::shared_ptr<ITransferFunction> transfer_function, IMask const& mask,
+                          std::shared_ptr<ITransferFunction> transfer_function, std::shared_ptr<IMask> mask,
                           std::size_t num_lines) {
     tf::Executor executor;
     tf::Taskflow taskflow;

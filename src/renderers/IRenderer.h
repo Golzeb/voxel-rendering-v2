@@ -14,7 +14,7 @@ public:
     virtual void deinit() = 0;
 
     virtual void update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
-                             IMask const& mask) = 0;
+                             std::shared_ptr<IMask> mask) = 0;
 
     virtual void clear() = 0;
     virtual void render(Camera const& camera) = 0;

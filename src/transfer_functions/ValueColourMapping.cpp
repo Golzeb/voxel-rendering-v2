@@ -5,7 +5,7 @@
 #include "glm/ext/vector_int3.hpp"
 
 ValueColourMapping::ValueColourMapping() {
-    m_default_colour = glm::vec3(0.0);
+    m_default_colour = glm::vec3(1.0);
     m_colour_map = {};
 }
 
