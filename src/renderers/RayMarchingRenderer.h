@@ -7,6 +7,7 @@
 #include "VoxelData.h"
 #include "glad/gl.h"
 #include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/vector_float3.hpp"
 #include "masks/IMask.h"
 #include "renderers/IRenderer.h"
 #include "transfer_functions/ITransferFunction.h"
@@ -14,6 +15,7 @@
 class RayMarchingRenderer : public IRenderer {
 public:
     struct Mode {
+        bool sorted = false;
         bool chunked = false;
         std::int32_t chunk_size = 0;
     };
@@ -38,6 +40,7 @@ private:
         GLuint voxel_data_buffer;
         GLuint colour_mapping_buffer;
         glm::mat4 model;
+        glm::vec3 position;
     };
 
     std::vector<Chunk> m_chunks;

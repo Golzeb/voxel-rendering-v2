@@ -1,5 +1,6 @@
 #include "RayMarchingRenderer.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -19,6 +20,7 @@
 #include "glm/ext/vector_float3.hpp"
 #include "glm/ext/vector_float4.hpp"
 #include "glm/ext/vector_int3.hpp"
+#include "glm/geometric.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/matrix.hpp"
 #include "masks/IMask.h"
@@ -166,6 +168,7 @@ void RayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<ITransfer
 
         glm::mat4 model{1.0f};
         m_chunks.back().model = glm::translate(model, glm::vec3(chunk.position));
+        m_chunks.back().position = chunk.position;
     }
 }
 
@@ -179,6 +182,12 @@ void RayMarchingRenderer::clear() {
 
 void RayMarchingRenderer::render(Camera const& camera) {
     glm::dmat4 inv_vp = glm::inverse(camera.vp());
+
+    if (m_mode.chunked && m_mode.sorted) {
+        std::sort(m_chunks.begin(), m_chunks.end(), [&](Chunk const& a, Chunk const& b) {
+            return glm::length(camera.position() - a.position) < glm::length(camera.position() - b.position);
+        });
+    }
 
     float pixel_delta_width = -1.0f - ((1.0f / IMAGE_WIDTH) * 2.0f - 1.0f);
     float pixel_delta_height = 1.0f - ((1.0f - (1.0f / IMAGE_HEIGHT)) * 2.0f - 1.0f);

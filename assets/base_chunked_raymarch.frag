@@ -54,11 +54,11 @@ vec3 start_position(vec3 direction, vec3 origin) {
     vec3 tmin = min(t0, t1);
     float max_tmin = max(max(tmin.x, tmin.y), tmin.z);
 
-    return (max_tmin + 1e-1) * direction + origin;
+    return (max_tmin + 1e-2) * direction + origin;
 }
 
 vec4 get_ray_color(vec3 direction, vec3 origin) {
-    vec3 og_origin = origin;
+    direction += 1e-10;
 
     if(should_cull(direction, origin)) {
         discard;
@@ -91,8 +91,8 @@ vec4 get_ray_color(vec3 direction, vec3 origin) {
 
         uint voxel = (voxel_grid.voxels[index / 2] >> shift) & uint(0xFFFF);
 
-        float depth = length(og_origin - vec3(current_position));
-        if(depth > depth_buffer.data[int(gl_FragCoord.x) + int(gl_FragCoord.y) * 1920]) {
+        float depth = length(u_camera_origin - vec3(current_position + 0.5f));
+        if(depth >= depth_buffer.data[int(gl_FragCoord.x) + int(gl_FragCoord.y) * 1920]) {
             discard;
         }
 

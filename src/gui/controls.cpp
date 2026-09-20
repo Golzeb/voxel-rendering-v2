@@ -106,6 +106,8 @@ void render(ApplicationState& appstate) {
 
         if (appstate.ray_marching_renderer_mode.chunked) {
             ImGui::SliderInt("Chunk size", &appstate.ray_marching_renderer_mode.chunk_size, 0, 512);
+
+            ImGui::Checkbox("Sorted", &appstate.ray_marching_renderer_mode.sorted);
         }
     }
 

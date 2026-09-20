@@ -50,7 +50,7 @@ int main() {
     appstate.transfer_function = transfer_function;
     appstate.mask = std::make_shared<ThresholdMask>(0, true);
 
-    Camera camera (glm::perspective(glm::radians(90.0f), float(IMAGE_WIDTH) / float(IMAGE_HEIGHT), 0.1f, 100.0f), glm::vec2{-89.0, 89.0});
+    Camera camera (glm::perspective(glm::radians(90.0f), float(IMAGE_WIDTH) / float(IMAGE_HEIGHT), 0.1f, 2000.0f), glm::vec2{-89.0, 89.0});
 
     GLuint query;
     glGenQueries(1, &query);
