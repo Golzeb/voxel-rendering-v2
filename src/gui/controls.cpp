@@ -101,6 +101,14 @@ void render(ApplicationState& appstate) {
         ImGui::Checkbox("Face culled", &appstate.instanced_raster_renderer_mode.face_culled);
     }
 
+    if (appstate.selected_renderer == Renderer::RAY_MARCHING) {
+        ImGui::Checkbox("Chunked", &appstate.ray_marching_renderer_mode.chunked);
+
+        if (appstate.ray_marching_renderer_mode.chunked) {
+            ImGui::SliderInt("Chunk size", &appstate.ray_marching_renderer_mode.chunk_size, 0, 512);
+        }
+    }
+
     if (ImGui::Button("Update renderer")) {
         appstate.current_renderer->deinit();
 
@@ -116,7 +124,7 @@ void render(ApplicationState& appstate) {
                     std::make_shared<InstancedRasterRenderer>(appstate.instanced_raster_renderer_mode);
                 break;
             case Renderer::RAY_MARCHING:
-                appstate.current_renderer = std::make_shared<RayMarchingRenderer>();
+                appstate.current_renderer = std::make_shared<RayMarchingRenderer>(appstate.ray_marching_renderer_mode);
                 break;
             case Renderer::COUNT:
                 break;

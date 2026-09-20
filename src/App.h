@@ -12,6 +12,7 @@
 #include "glm/ext/vector_float2.hpp"
 #include "masks/IMask.h"
 #include "renderers/IRenderer.h"
+#include "renderers/RayMarchingRenderer.h"
 #include "transfer_functions/ITransferFunction.h"
 
 constexpr float BASE_CAMERA_SPEED = 40.0f;
@@ -35,10 +36,14 @@ struct ApplicationState {
     Renderer selected_renderer = Renderer::NOOP;
     std::vector<char const*> renderer_names{"Noop renderer", "Raster renderer", "Instanced raster renderer",
                                             "Ray marching renderer"};
-    RasterRenderer::Mode raster_renderer_mode;
-    InstancedRasterRenderer::Mode instanced_raster_renderer_mode;
+
     bool back_face_culling = false;
     bool wireframe = false;
+
+    RasterRenderer::Mode raster_renderer_mode;
+    InstancedRasterRenderer::Mode instanced_raster_renderer_mode;
+
+    RayMarchingRenderer::Mode ray_marching_renderer_mode;
 
     std::shared_ptr<IRenderer> current_renderer{};
     std::shared_ptr<ITransferFunction> transfer_function{};
