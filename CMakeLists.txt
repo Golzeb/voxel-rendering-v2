@@ -38,6 +38,7 @@ set(SOURCES
     src/renderers/NoopRenderer.cpp
     src/renderers/RasterRenderer.cpp
     src/renderers/InstancedRasterRenderer.cpp
+    src/renderers/RayMarchingRenderer.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

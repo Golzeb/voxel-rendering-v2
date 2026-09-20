@@ -14,10 +14,13 @@
 #include "renderers/IRenderer.h"
 #include "transfer_functions/ITransferFunction.h"
 
+constexpr float BASE_CAMERA_SPEED = 40.0f;
+
 enum class Renderer : int {
     NOOP = 0,
     RASTER,
     INSTANCED_RASTER,
+    RAY_MARCHING,
     COUNT,
 };
 
@@ -30,7 +33,8 @@ struct ApplicationState {
     glm::vec2 previous_mouse_position = glm::vec2(0.0f);
 
     Renderer selected_renderer = Renderer::NOOP;
-    std::vector<char const*> renderer_names{"Noop renderer", "Raster renderer", "Instanced raster renderer"};
+    std::vector<char const*> renderer_names{"Noop renderer", "Raster renderer", "Instanced raster renderer",
+                                            "Ray marching renderer"};
     RasterRenderer::Mode raster_renderer_mode;
     InstancedRasterRenderer::Mode instanced_raster_renderer_mode;
     bool back_face_culling = false;
@@ -40,7 +44,7 @@ struct ApplicationState {
     std::shared_ptr<ITransferFunction> transfer_function{};
     std::shared_ptr<IMask> mask{};
 
-    float camera_speed = 40.0f;
+    float camera_speed = BASE_CAMERA_SPEED;
 
     float delta_time = 0.0f;
     float gpu_time = 0.0f;

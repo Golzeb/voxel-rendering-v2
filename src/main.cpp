@@ -1,5 +1,4 @@
 #include <memory>
-#include <vector>
 
 // clang-format off
 #include "glad/gl.h"
@@ -18,13 +17,11 @@
 #include "glm/ext/vector_int3.hpp"
 #include "loaders.h"
 #include "masks/ThresholdMask.h"
-#include "renderers/IRenderer.h"
 #include "renderers/NoopRenderer.h"
 #include "spdlog/spdlog.h"
 #include "App.h"
 
 GLFWwindow* create_window();
-void populate_renderers(std::vector<std::shared_ptr<IRenderer>>& renderers, std::vector<const char*>& names);
 void handle_camera_input(ApplicationState& appstate, Camera& camera); 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
@@ -48,7 +45,7 @@ int main() {
     appstate.current_renderer = std::make_shared<NoopRenderer>();
 
 
-    auto [data, transfer_function] = loaders::read_vl32("data/sponza_1024x1024x1024.vl32", glm::ivec3{1024, 1024, 1024});
+    auto [data, transfer_function] = loaders::read_vl32("data/sponza_256x256x256.vl32", glm::ivec3{256, 256, 256});
     appstate.data = data;
     appstate.transfer_function = transfer_function;
     appstate.mask = std::make_shared<ThresholdMask>(0, true);
@@ -122,12 +119,17 @@ GLFWwindow* create_window() {
 }
 
 void handle_camera_input(ApplicationState& appstate, Camera& camera) {
+    appstate.camera_speed = BASE_CAMERA_SPEED; 
     if (appstate.mouse_locked) {
         glm::vec2 current_mouse_position = utils::get_cursor_position(appstate.window);
         glm::vec2 mouse_delta = current_mouse_position - appstate.previous_mouse_position;
         appstate.previous_mouse_position = current_mouse_position;
         camera.update_pitch(mouse_delta.y * 0.1f);
         camera.update_yaw(-mouse_delta.x * 0.1f);
+    }
+
+    if(glfwGetKey(appstate.window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+        appstate.camera_speed = BASE_CAMERA_SPEED * 2.0f;
     }
 
     if (glfwGetKey(appstate.window, GLFW_KEY_W) == GLFW_PRESS) {

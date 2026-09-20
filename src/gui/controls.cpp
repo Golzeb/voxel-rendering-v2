@@ -17,6 +17,7 @@
 #include "renderers/InstancedRasterRenderer.h"
 #include "renderers/NoopRenderer.h"
 #include "renderers/RasterRenderer.h"
+#include "renderers/RayMarchingRenderer.h"
 #include "utils.h"
 
 namespace gui {
@@ -113,6 +114,9 @@ void render(ApplicationState& appstate) {
             case Renderer::INSTANCED_RASTER:
                 appstate.current_renderer =
                     std::make_shared<InstancedRasterRenderer>(appstate.instanced_raster_renderer_mode);
+                break;
+            case Renderer::RAY_MARCHING:
+                appstate.current_renderer = std::make_shared<RayMarchingRenderer>();
                 break;
             case Renderer::COUNT:
                 break;
