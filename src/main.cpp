@@ -44,8 +44,7 @@ int main() {
     appstate.selected_renderer = Renderer::NOOP;
     appstate.current_renderer = std::make_shared<NoopRenderer>();
 
-
-    auto [data, transfer_function] = loaders::read_vl32("data/sponza_512x512x512.vl32", glm::ivec3{512, 512, 512});
+    auto [data, transfer_function] = loaders::read_vl32("data/sponza_1024x1024x1024.vl32", glm::ivec3{1024, 1024, 1024});
     appstate.data = data;
     appstate.transfer_function = transfer_function;
     appstate.mask = std::make_shared<ThresholdMask>(0, true);

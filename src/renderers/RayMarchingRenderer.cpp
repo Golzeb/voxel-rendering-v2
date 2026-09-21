@@ -1,10 +1,15 @@
 #include "RayMarchingRenderer.h"
 
 #include <algorithm>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 #include "Camera.h"
 #include "VoxelData.h"
@@ -24,6 +29,9 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/matrix.hpp"
 #include "masks/IMask.h"
+#include "taskflow/algorithm/pipeline.hpp"
+#include "taskflow/core/executor.hpp"
+#include "taskflow/core/taskflow.hpp"
 #include "transfer_functions/ITransferFunction.h"
 #include "utils.h"
 
@@ -96,6 +104,11 @@ void RayMarchingRenderer::deinit() {
 
 void RayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
                                       std::shared_ptr<IMask> mask) {
+    std::size_t const lines = std::thread::hardware_concurrency();
+
+    tf::Executor executor;
+    tf::Taskflow taskflow;
+
     GLint data_size_location = glGetUniformLocation(m_shader_program, "u_data_size");
     if (m_mode.chunked) {
         glm::ivec3 const size{m_mode.chunk_size, m_mode.chunk_size, m_mode.chunk_size};
@@ -121,55 +134,124 @@ void RayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<ITransfer
         provider = std::make_shared<FullDataProvider>(data);
     }
 
-    while (auto maybe_chunk = provider->next()) {
-        auto chunk = maybe_chunk.value();
+    std::vector<IVoxelDataProvider::VoxelDataChunk> data_chunks;
+    data_chunks.resize(lines);
+
+    std::vector<Chunk> chunks;
+
+    std::mutex chunks_mutex;
+    std::condition_variable c;
+
+    tf::Pipeline pipeline{
+        lines,
+        tf::Pipe{
+            tf::PipeType::SERIAL,
+            [&](tf::Pipeflow& pf) {
+                auto v = provider->next();
+                if (!v) {
+                    pf.stop();
+                    return;
+                }
+
+                data_chunks[pf.line()] = v.value();
+            },
+        },
+        tf::Pipe{
+            tf::PipeType::PARALLEL,
+            [&](tf::Pipeflow& pf) {
+                IVoxelDataProvider::VoxelDataChunk chunk = std::move(data_chunks[pf.line()]);
+                data_chunks[pf.line()] = {};
+
+                tracked_vector<VoxelData::Type> voxels;
+                tracked_vector<glm::vec4> colours;
+                colours.push_back(glm::vec4(0.0f));
+                tracked_umap<VoxelData::Type, std::uint32_t> colour_map;
+
+                for (std::size_t z = 0; z < chunk.data.size().z; z++) {
+                    for (std::size_t y = 0; y < chunk.data.size().y; y++) {
+                        for (std::size_t x = 0; x < chunk.data.size().x; x++) {
+                            VoxelData::Type const voxel_value = chunk.data.get_voxel(glm::ivec3{x, y, z});
+                            glm::ivec3 const position{x, y, z};
+
+                            if (!mask->is_visible(position, voxel_value)) {
+                                voxels.push_back(0);
+                                continue;
+                            }
+
+                            std::uint32_t colour;
+
+                            if (colour_map.contains(voxel_value)) {
+                                colour = colour_map[voxel_value];
+                            } else {
+                                colour = colours.size();
+                                colours.push_back(glm::vec4(transfer_function->colour(position, voxel_value), 1.0f));
+                                colour_map.insert_or_assign(voxel_value, colour);
+                            }
+
+                            voxels.push_back(colour);
+                        }
+                    }
+                }
+
+                {
+                    std::lock_guard lock(chunks_mutex);
+                    chunks.push_back(Chunk{
+                        .voxels = voxels,
+                        .colours = colours,
+                        .model = glm::translate(glm::mat4(1.0f), glm::vec3(chunk.position)),
+                        .position = chunk.position,
+                    });
+                    c.notify_one();
+                }
+            },
+        },
+    };
+
+    taskflow.composed_of(pipeline);
+    auto future = executor.run(taskflow);
+
+    bool producer_done = false;
+
+    std::thread completion_wait([&] {
+        future.wait();
+
+        {
+            std::lock_guard lock(chunks_mutex);
+            producer_done = true;
+        }
+
+        c.notify_one();
+    });
+
+    while (true) {
+        Chunk chunk;
+        {
+            std::unique_lock lock(chunks_mutex);
+            c.wait(lock, [&] { return producer_done || !chunks.empty(); });
+
+            if (chunks.empty() && producer_done) break;
+
+            chunk = std::move(chunks.back());
+            chunks.pop_back();
+        }
+
         m_chunks.push_back({});
 
         glCreateBuffers(1, &m_chunks.back().voxel_data_buffer);
         glCreateBuffers(1, &m_chunks.back().colour_mapping_buffer);
 
-        tracked_vector<VoxelData::Type> voxels;
-        tracked_umap<VoxelData::Type, std::uint32_t> colour_map;
-        tracked_vector<glm::vec4> colours;
-        colours.push_back(glm::vec4(0.0f));
-
-        for (std::size_t z = 0; z < chunk.data.size().z; z++) {
-            for (std::size_t y = 0; y < chunk.data.size().y; y++) {
-                for (std::size_t x = 0; x < chunk.data.size().x; x++) {
-                    VoxelData::Type const voxel_value = chunk.data.get_voxel(glm::ivec3{x, y, z});
-                    glm::ivec3 const position{x, y, z};
-
-                    if (!mask->is_visible(position, voxel_value)) {
-                        voxels.push_back(0);
-                        continue;
-                    }
-
-                    std::uint32_t colour;
-
-                    if (colour_map.contains(voxel_value)) {
-                        colour = colour_map[voxel_value];
-                    } else {
-                        colour = colours.size();
-                        colours.push_back(glm::vec4(transfer_function->colour(position, voxel_value), 1.0f));
-                        colour_map.insert_or_assign(voxel_value, colour);
-                    }
-
-                    voxels.push_back(colour);
-                }
-            }
-        }
-
-        talloc::glNamedBufferData(m_chunks.back().colour_mapping_buffer, sizeof(glm::vec4) * colours.size(),
-                                  colours.data(),
+        talloc::glNamedBufferData(m_chunks.back().colour_mapping_buffer, sizeof(glm::vec4) * chunk.colours.size(),
+                                  chunk.colours.data(),
 
                                   GL_STATIC_READ);
-        talloc::glNamedBufferData(m_chunks.back().voxel_data_buffer, sizeof(VoxelData::Type) * voxels.size(),
-                                  voxels.data(), GL_STATIC_READ);
+        talloc::glNamedBufferData(m_chunks.back().voxel_data_buffer, sizeof(VoxelData::Type) * chunk.voxels.size(),
+                                  chunk.voxels.data(), GL_STATIC_READ);
 
-        glm::mat4 model{1.0f};
-        m_chunks.back().model = glm::translate(model, glm::vec3(chunk.position));
+        m_chunks.back().model = glm::translate(glm::mat4(1.0f), glm::vec3(chunk.position));
         m_chunks.back().position = chunk.position;
     }
+
+    completion_wait.join();
 }
 
 void RayMarchingRenderer::clear() {
@@ -184,7 +266,7 @@ void RayMarchingRenderer::render(Camera const& camera) {
     glm::dmat4 inv_vp = glm::inverse(camera.vp());
 
     if (m_mode.chunked && m_mode.sorted) {
-        std::sort(m_chunks.begin(), m_chunks.end(), [&](Chunk const& a, Chunk const& b) {
+        std::sort(m_chunks.begin(), m_chunks.end(), [&](UploadedChunk const& a, UploadedChunk const& b) {
             return glm::length(camera.position() - a.position) < glm::length(camera.position() - b.position);
         });
     }

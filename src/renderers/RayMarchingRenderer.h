@@ -5,9 +5,11 @@
 
 #include "Camera.h"
 #include "VoxelData.h"
+#include "allocators/TrackingAllocator.h"
 #include "glad/gl.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/vector_float3.hpp"
+#include "glm/ext/vector_float4.hpp"
 #include "masks/IMask.h"
 #include "renderers/IRenderer.h"
 #include "transfer_functions/ITransferFunction.h"
@@ -36,14 +38,21 @@ public:
     char const* name() override;
 
 private:
-    struct Chunk {
+    struct UploadedChunk {
         GLuint voxel_data_buffer;
         GLuint colour_mapping_buffer;
         glm::mat4 model;
         glm::vec3 position;
     };
 
-    std::vector<Chunk> m_chunks;
+    struct Chunk {
+        tracked_vector<VoxelData::Type> voxels;
+        tracked_vector<glm::vec4> colours;
+        glm::mat4 model;
+        glm::vec3 position;
+    };
+
+    std::vector<UploadedChunk> m_chunks;
 
     GLuint m_shader_program;
     GLuint m_vbo;
