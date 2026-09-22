@@ -3,6 +3,7 @@
 #include <vector>
 
 // clang-format off
+#include "renderers/GridHierarchyRayMarchingRenderer.h"
 #include "renderers/InstancedRasterRenderer.h"
 #include "renderers/RasterRenderer.h"
 // clang-format on
@@ -22,6 +23,7 @@ enum class Renderer : int {
     RASTER,
     INSTANCED_RASTER,
     RAY_MARCHING,
+    GRID_HIERARCHY_RAY_MARCHING,
     COUNT,
 };
 
@@ -35,7 +37,7 @@ struct ApplicationState {
 
     Renderer selected_renderer = Renderer::NOOP;
     std::vector<char const*> renderer_names{"Noop renderer", "Raster renderer", "Instanced raster renderer",
-                                            "Ray marching renderer"};
+                                            "Ray marching renderer", "Grid hierarchy ray marching renderer"};
 
     bool back_face_culling = false;
     bool wireframe = false;
@@ -44,6 +46,7 @@ struct ApplicationState {
     InstancedRasterRenderer::Mode instanced_raster_renderer_mode;
 
     RayMarchingRenderer::Mode ray_marching_renderer_mode;
+    GridHierarchyRayMarchingRenderer::Mode grid_hierarchy_ray_marching_renderer_mode;
 
     std::shared_ptr<IRenderer> current_renderer{};
     std::shared_ptr<ITransferFunction> transfer_function{};

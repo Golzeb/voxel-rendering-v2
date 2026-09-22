@@ -14,6 +14,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "renderers/GridHierarchyRayMarchingRenderer.h"
 #include "renderers/InstancedRasterRenderer.h"
 #include "renderers/NoopRenderer.h"
 #include "renderers/RasterRenderer.h"
@@ -111,6 +112,16 @@ void render(ApplicationState& appstate) {
         }
     }
 
+    if (appstate.selected_renderer == Renderer::GRID_HIERARCHY_RAY_MARCHING) {
+        ImGui::Checkbox("Chunked", &appstate.grid_hierarchy_ray_marching_renderer_mode.chunked);
+
+        if (appstate.grid_hierarchy_ray_marching_renderer_mode.chunked) {
+            ImGui::SliderInt("Chunk size", &appstate.grid_hierarchy_ray_marching_renderer_mode.chunk_size, 0, 2048);
+
+            ImGui::Checkbox("Sorted", &appstate.grid_hierarchy_ray_marching_renderer_mode.sorted);
+        }
+    }
+
     if (ImGui::Button("Update renderer")) {
         appstate.current_renderer->deinit();
 
@@ -127,6 +138,10 @@ void render(ApplicationState& appstate) {
                 break;
             case Renderer::RAY_MARCHING:
                 appstate.current_renderer = std::make_shared<RayMarchingRenderer>(appstate.ray_marching_renderer_mode);
+                break;
+            case Renderer::GRID_HIERARCHY_RAY_MARCHING:
+                appstate.current_renderer = std::make_shared<GridHierarchyRayMarchingRenderer>(
+                    appstate.grid_hierarchy_ray_marching_renderer_mode);
                 break;
             case Renderer::COUNT:
                 break;

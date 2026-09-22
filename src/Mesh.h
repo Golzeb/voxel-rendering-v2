@@ -106,7 +106,7 @@ inline UploadedMesh upload_mesh(Mesh&& mesh) {
     return umesh;
 }
 
-inline void destroy_mesh(UploadedMesh mesh) {
+inline void destroy_mesh(UploadedMesh& mesh) {
     glDeleteVertexArrays(1, &mesh.vao);
     glDeleteBuffers(1, &mesh.vbo);
     glDeleteBuffers(1, &mesh.colour_buffer);

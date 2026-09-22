@@ -39,6 +39,7 @@ set(SOURCES
     src/renderers/RasterRenderer.cpp
     src/renderers/InstancedRasterRenderer.cpp
     src/renderers/RayMarchingRenderer.cpp
+    src/renderers/GridHierarchyRayMarchingRenderer.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
