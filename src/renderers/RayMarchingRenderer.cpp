@@ -48,7 +48,7 @@ void RayMarchingRenderer::init() {
 
         std::string fragment_source;
         if (m_mode.chunked) {
-            fragment_source = utils::load_shader("assets/base_chunked_raymarch.frag");
+            fragment_source = utils::load_shader("assets/chunked_base_raymarch.frag");
         } else {
             fragment_source = utils::load_shader("assets/base_raymarch.frag");
         }
