@@ -117,8 +117,10 @@ void RayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<ITransfer
         glProgramUniform3iv(m_shader_program, data_size_location, 1, glm::value_ptr(data.size()));
     }
 
-    talloc::glNamedBufferData(m_depth_buffer, IMAGE_WIDTH * IMAGE_HEIGHT * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
-    glClearNamedBufferData(m_depth_buffer, GL_R32F, 0, IMAGE_WIDTH * IMAGE_HEIGHT, nullptr);
+    if (m_mode.chunked) {
+        talloc::glNamedBufferData(m_depth_buffer, IMAGE_WIDTH * IMAGE_HEIGHT * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+        glClearNamedBufferData(m_depth_buffer, GL_R32F, 0, IMAGE_WIDTH * IMAGE_HEIGHT, nullptr);
+    }
 
     constexpr float vertices[] = {
         -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f,
@@ -134,10 +136,10 @@ void RayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<ITransfer
         provider = std::make_shared<FullDataProvider>(data);
     }
 
-    std::vector<IVoxelDataProvider::VoxelDataChunk> data_chunks;
+    tracked_vector<IVoxelDataProvider::VoxelDataChunk> data_chunks;
     data_chunks.resize(lines);
 
-    std::vector<Chunk> chunks;
+    tracked_vector<Chunk> chunks;
 
     std::mutex chunks_mutex;
     std::condition_variable c;
@@ -161,6 +163,8 @@ void RayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<ITransfer
             [&](tf::Pipeflow& pf) {
                 IVoxelDataProvider::VoxelDataChunk chunk = std::move(data_chunks[pf.line()]);
                 data_chunks[pf.line()] = {};
+
+                bool empty = true;
 
                 tracked_vector<VoxelData::Type> voxels;
                 tracked_vector<glm::vec4> colours;
@@ -188,16 +192,17 @@ void RayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<ITransfer
                                 colour_map.insert_or_assign(voxel_value, colour);
                             }
 
+                            empty = false;
                             voxels.push_back(colour);
                         }
                     }
                 }
 
-                {
+                if (!empty) {
                     std::lock_guard lock(chunks_mutex);
                     chunks.push_back(Chunk{
-                        .voxels = voxels,
-                        .colours = colours,
+                        .voxels = std::move(voxels),
+                        .colours = std::move(colours),
                         .model = glm::translate(glm::mat4(1.0f), glm::vec3(chunk.position)),
                         .position = chunk.position,
                     });

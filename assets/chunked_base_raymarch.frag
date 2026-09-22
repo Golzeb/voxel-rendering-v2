@@ -107,7 +107,7 @@ vec4 get_ray_color(vec3 direction, vec3 origin) {
         tmax += tdelta * vec3(mask);
     }
 
-    return vec4(0.2f, 0.2f, 0.2f, 1.0f);
+    discard;
 }
 
 void main() {
