@@ -14,6 +14,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "renderers/BrickmapRayMarchingRenderer.h"
 #include "renderers/GridHierarchyRayMarchingRenderer.h"
 #include "renderers/InstancedRasterRenderer.h"
 #include "renderers/NoopRenderer.h"
@@ -142,6 +143,9 @@ void render(ApplicationState& appstate) {
             case Renderer::GRID_HIERARCHY_RAY_MARCHING:
                 appstate.current_renderer = std::make_shared<GridHierarchyRayMarchingRenderer>(
                     appstate.grid_hierarchy_ray_marching_renderer_mode);
+                break;
+            case Renderer::BRICKMAP_RAY_MARCHING:
+                appstate.current_renderer = std::make_shared<BrickmapRayMarchingRenderer>();
                 break;
             case Renderer::COUNT:
                 break;

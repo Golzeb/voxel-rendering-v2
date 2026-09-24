@@ -40,6 +40,7 @@ set(SOURCES
     src/renderers/InstancedRasterRenderer.cpp
     src/renderers/RayMarchingRenderer.cpp
     src/renderers/GridHierarchyRayMarchingRenderer.cpp
+    src/renderers/BrickmapRayMarchingRenderer.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

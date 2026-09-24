@@ -24,6 +24,7 @@ enum class Renderer : int {
     INSTANCED_RASTER,
     RAY_MARCHING,
     GRID_HIERARCHY_RAY_MARCHING,
+    BRICKMAP_RAY_MARCHING,
     COUNT,
 };
 
@@ -36,8 +37,12 @@ struct ApplicationState {
     glm::vec2 previous_mouse_position = glm::vec2(0.0f);
 
     Renderer selected_renderer = Renderer::NOOP;
-    std::vector<char const*> renderer_names{"Noop renderer", "Raster renderer", "Instanced raster renderer",
-                                            "Ray marching renderer", "Grid hierarchy ray marching renderer"};
+    std::vector<char const*> renderer_names{"Noop renderer",
+                                            "Raster renderer",
+                                            "Instanced raster renderer",
+                                            "Ray marching renderer",
+                                            "Grid hierarchy ray marching renderer",
+                                            "Brickmap ray marching renderer"};
 
     bool back_face_culling = false;
     bool wireframe = false;
