@@ -17,7 +17,7 @@ void ValueColourMapping::set_colour(VoxelData::Type value, glm::vec3 const& colo
     m_colour_map.insert_or_assign(value, colour);
 }
 
-glm::vec3 ValueColourMapping::colour(glm::ivec3 const& voxel_position, VoxelData::Type voxel_value) {
+glm::vec3 ValueColourMapping::colour(glm::ivec3 voxel_position, VoxelData::Type voxel_value) {
     if (m_colour_map.contains(voxel_value)) {
         return m_colour_map.at(voxel_value);
     }

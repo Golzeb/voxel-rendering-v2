@@ -19,8 +19,8 @@ public:
     VoxelData(glm::ivec3 const& size, bool full = false);
     ~VoxelData() = default;
 
-    void set_voxel(glm::ivec3 const& position, Type value);
-    VoxelData::Type get_voxel(glm::ivec3 const& position) const;
+    void set_voxel(glm::ivec3 position, Type value);
+    VoxelData::Type get_voxel(glm::ivec3 position) const;
 
     glm::ivec3 size() const;
 

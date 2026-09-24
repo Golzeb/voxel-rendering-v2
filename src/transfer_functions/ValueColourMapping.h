@@ -14,7 +14,7 @@ public:
     void set_default_colour(glm::vec3 const& new_colour);
     void set_colour(VoxelData::Type value, glm::vec3 const& colour);
 
-    glm::vec3 colour(glm::ivec3 const& voxel_position, VoxelData::Type voxel_value) override;
+    glm::vec3 colour(glm::ivec3 voxel_position, VoxelData::Type voxel_value) override;
 
 private:
     glm::vec3 m_default_colour;

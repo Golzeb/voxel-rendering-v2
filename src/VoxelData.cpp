@@ -21,7 +21,7 @@ VoxelData::VoxelData(glm::ivec3 const& size, bool full) {
     }
 }
 
-void VoxelData::set_voxel(glm::ivec3 const& position, Type value) {
+void VoxelData::set_voxel(glm::ivec3 position, Type value) {
     glm::ivec3 const chunk_position = position / CHUNK_SIZE;
     glm::ivec3 const voxel_position = position % CHUNK_SIZE;
 
@@ -45,7 +45,7 @@ void VoxelData::set_voxel(glm::ivec3 const& position, Type value) {
     chunk.voxels[voxel_index] = value;
 }
 
-VoxelData::Type VoxelData::get_voxel(glm::ivec3 const& position) const {
+VoxelData::Type VoxelData::get_voxel(glm::ivec3 position) const {
     glm::ivec3 const chunk_position = position / CHUNK_SIZE;
     glm::ivec3 const voxel_position = position % CHUNK_SIZE;
 

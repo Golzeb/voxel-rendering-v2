@@ -7,5 +7,5 @@ class IMask {
 public:
     virtual ~IMask() = default;
 
-    virtual bool is_visible(glm::ivec3 const& position, VoxelData::Type voxel_value) const = 0;
+    virtual bool is_visible(glm::ivec3 position, VoxelData::Type voxel_value) const = 0;
 };

@@ -5,7 +5,7 @@
 
 class ThresholdMask : public IMask {
 public:
-    bool is_visible(glm::ivec3 const& position, VoxelData::Type voxel_value) const override;
+    bool is_visible(glm::ivec3 position, VoxelData::Type voxel_value) const override;
 
     ThresholdMask(VoxelData::Type threshold, bool inverted = false);
     ~ThresholdMask() override = default;
