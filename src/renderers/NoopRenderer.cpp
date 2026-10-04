@@ -14,6 +14,8 @@ void NoopRenderer::deinit() {};
 void NoopRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
                                std::shared_ptr<IMask> mask) {}
 
+void NoopRenderer::update_colour(std::shared_ptr<ITransferFunction> transfer_function) {}
+
 void NoopRenderer::clear() {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }

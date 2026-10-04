@@ -31,6 +31,9 @@ public:
 
     void update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
                      std::shared_ptr<IMask> mask) override;
+
+    void update_colour(std::shared_ptr<ITransferFunction> transfer_function) override;
+
     void clear() override;
 
     void render(Camera const& camera) override;
@@ -43,6 +46,8 @@ private:
         GLuint colour_mapping_buffer;
         glm::mat4 model;
         glm::vec3 position;
+
+        std::vector<VoxelData::Type> values;
     };
 
     struct Chunk {
@@ -50,6 +55,8 @@ private:
         tracked_vector<glm::vec4> colours;
         glm::mat4 model;
         glm::vec3 position;
+
+        tracked_vector<VoxelData::Type> values;
     };
 
     std::vector<UploadedChunk> m_chunks;

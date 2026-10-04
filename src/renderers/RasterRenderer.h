@@ -31,6 +31,8 @@ public:
 
     void update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function, std::shared_ptr<IMask> mask) override;
 
+    void update_colour(std::shared_ptr<ITransferFunction> transfer_function) override;
+
     void clear() override;
     void render(Camera const& camera) override;
 

@@ -33,6 +33,9 @@ public:
 
     void update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
                      std::shared_ptr<IMask> mask) override;
+
+    void update_colour(std::shared_ptr<ITransferFunction> transfer_function) override;
+
     void clear() override;
 
     void render(Camera const& camera) override;
@@ -55,6 +58,8 @@ private:
         glm::vec3 position;
 
         std::uint32_t layers;
+
+        std::vector<VoxelData::Type> values;
     };
 
     struct Chunk {
@@ -62,6 +67,7 @@ private:
         tracked_vector<std::uint32_t> layers_data;
         tracked_vector<VoxelData::Type> voxels;
         tracked_vector<glm::vec4> colours;
+        tracked_vector<VoxelData::Type> values;
 
         glm::mat4 model;
         glm::vec3 position;

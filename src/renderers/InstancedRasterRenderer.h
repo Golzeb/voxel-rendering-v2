@@ -37,6 +37,8 @@ public:
     void update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
                      std::shared_ptr<IMask> mask) override;
 
+    void update_colour(std::shared_ptr<ITransferFunction> transfer_function) override;
+
     void clear() override;
     void render(Camera const& camera) override;
 
@@ -45,6 +47,7 @@ public:
 private:
     Mode m_mode;
 
+    std::vector<VoxelData::Type> m_voxel_values;
     GLuint m_colour_buffer;
 
     std::vector<std::uint32_t> m_indices;

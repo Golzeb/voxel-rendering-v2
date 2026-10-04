@@ -19,6 +19,7 @@
 #include "extractors/NaiveMeshExtractor.h"
 #include "glad/gl.h"
 #include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/vector_float4.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "masks/IMask.h"
 #include "optimizers/IMeshOptimizer.h"
@@ -116,6 +117,20 @@ void RasterRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunct
     };
 
     pipeline.run(callback, transfer_function, mask);
+}
+
+void RasterRenderer::update_colour(std::shared_ptr<ITransferFunction> transfer_function) {
+    for (auto& mesh : m_meshes) {
+        std::vector<glm::vec4> new_colours;
+        new_colours.reserve(mesh.values.size());
+
+        for (auto value : mesh.values) {
+            new_colours.push_back(glm::vec4(transfer_function->colour({0, 0, 0}, value), 1.0f));
+        }
+
+        glNamedBufferData(mesh.colour_buffer, sizeof(glm::vec4) * new_colours.size(), new_colours.data(),
+                          GL_STATIC_READ);
+    }
 }
 
 void RasterRenderer::clear() {

@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "Camera.h"
 #include "VoxelData.h"
@@ -289,8 +290,21 @@ void InstancedRasterRenderer::update_data(VoxelData& data, std::shared_ptr<ITran
         }
     }
 
+    m_voxel_values = std::vector<VoxelData::Type>(values.begin(), values.end());
+
     glCreateBuffers(1, &m_colour_buffer);
     talloc::glNamedBufferData(m_colour_buffer, sizeof(glm::vec4) * colours.size(), colours.data(), GL_STATIC_DRAW);
+}
+
+void InstancedRasterRenderer::update_colour(std::shared_ptr<ITransferFunction> transfer_function) {
+    std::vector<glm::vec4> new_colours;
+    new_colours.reserve(m_voxel_values.size());
+
+    for (auto value : m_voxel_values) {
+        new_colours.push_back(glm::vec4(transfer_function->colour({0, 0, 0}, value), 1.0f));
+    }
+
+    glNamedBufferData(m_colour_buffer, sizeof(glm::vec4) * new_colours.size(), new_colours.data(), GL_STATIC_READ);
 }
 
 void InstancedRasterRenderer::clear() {

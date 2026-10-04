@@ -75,11 +75,7 @@ bool PiecewiseColourMapping::controls() {
     static VoxelData::Type const min_value = std::numeric_limits<VoxelData::Type>::min();
     static VoxelData::Type const max_value = std::numeric_limits<VoxelData::Type>::max();
 
-    static bool previous_updated = false;
-    static bool updated = false;
-
-    previous_updated = updated;
-    updated = false;
+    bool updated = false;
 
     if (ImGui::Button("Sort colours")) {
         std::sort(m_points.begin(), m_points.end(),
@@ -105,7 +101,7 @@ bool PiecewiseColourMapping::controls() {
                 updated |= true;
             }
             updated |= ImGui::ColorPicker3("", glm::value_ptr(m_points[i].colour));
-            updated |= ImGui::SliderScalar("Point", ImGuiDataType_S16, &m_points[i].point, &min_value, &max_value);
+            updated |= ImGui::SliderScalar("Point", ImGuiDataType_U16, &m_points[i].point, &min_value, &max_value);
         }
         ImGui::PopID();
     }
@@ -114,5 +110,5 @@ bool PiecewiseColourMapping::controls() {
         m_points.erase(m_points.begin() + index);
     }
 
-    return previous_updated && !updated;
+    return updated;
 }

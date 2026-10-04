@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "Camera.h"
 #include "VoxelData.h"
@@ -19,7 +20,6 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/matrix.hpp"
 #include "masks/IMask.h"
-#include "spdlog/spdlog.h"
 #include "transfer_functions/ITransferFunction.h"
 #include "utils.h"
 
@@ -124,8 +124,6 @@ void BrickmapRayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<I
 
     std::size_t brick_id = 1;
 
-    float time_sum = 0.0f;
-
     for (std::size_t z = 0; z < data.size().z; z++) {
         for (std::size_t y = 0; y < data.size().y; y++) {
             for (std::size_t x = 0; x < data.size().x; x++) {
@@ -165,6 +163,7 @@ void BrickmapRayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<I
                     colour_map.insert({voxel_value, colours.size()});
                     brickmap_colours[brickmap_index - 1].push_back(colour_map[voxel_value]);
                     colours.push_back(glm::vec4(transfer_function->colour(glm::ivec3{x, y, z}, voxel_value), 1.0f));
+                    m_values.push_back(voxel_value);
                 }
             }
         }
@@ -184,8 +183,18 @@ void BrickmapRayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<I
                               brickmap_colours_vector.data(), GL_STATIC_READ);
     talloc::glNamedBufferData(m_colour_mapping_buffer, sizeof(glm::vec4) * colours.size(), colours.data(),
                               GL_STATIC_READ);
+}
 
-    spdlog::info("Time sum: {}", time_sum);
+void BrickmapRayMarchingRenderer::update_colour(std::shared_ptr<ITransferFunction> transfer_function) {
+    std::vector<glm::vec4> new_colours;
+    new_colours.reserve(m_values.size());
+
+    for (auto value : m_values) {
+        new_colours.push_back(glm::vec4(transfer_function->colour({0, 0, 0}, value), 1.0f));
+    }
+
+    glNamedBufferData(m_colour_mapping_buffer, sizeof(glm::vec4) * new_colours.size(), new_colours.data(),
+                      GL_STATIC_READ);
 }
 
 void BrickmapRayMarchingRenderer::clear() {}

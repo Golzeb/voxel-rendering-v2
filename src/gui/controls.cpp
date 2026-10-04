@@ -187,6 +187,7 @@ void render(ApplicationState& appstate) {
         ImGui::Begin("Colour mapping");
 
         if (appstate.transfer_function->controls()) {
+            appstate.current_renderer->update_colour(appstate.transfer_function);
         }
 
         ImGui::End();

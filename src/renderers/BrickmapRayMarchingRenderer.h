@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <vector>
 
 #include "Camera.h"
 #include "VoxelData.h"
@@ -18,6 +19,9 @@ public:
 
     void update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
                      std::shared_ptr<IMask> mask) override;
+
+    void update_colour(std::shared_ptr<ITransferFunction> transfer_function) override;
+
     void clear() override;
 
     void render(Camera const& camera) override;
@@ -30,6 +34,8 @@ private:
         tracked_vector<VoxelData::Type> voxel_values;
         glm::ivec3 position;
     };
+
+    std::vector<VoxelData::Type> m_values;
 
     GLuint m_shader_program;
     GLuint m_vbo;

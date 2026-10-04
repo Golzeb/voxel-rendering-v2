@@ -224,6 +224,8 @@ void GridHierarchyRayMarchingRenderer::update_data(VoxelData& data,
                 layers.back().init(chunk.data.size());
 
                 tracked_vector<VoxelData::Type> voxels;
+                tracked_vector<VoxelData::Type> values;
+                values.push_back(0);
                 tracked_vector<glm::vec4> colours;
                 colours.push_back(glm::vec4(0.0f));
                 tracked_umap<VoxelData::Type, std::uint32_t> colour_map;
@@ -247,6 +249,7 @@ void GridHierarchyRayMarchingRenderer::update_data(VoxelData& data,
                                 colour = colours.size();
                                 colours.push_back(glm::vec4(transfer_function->colour(position, voxel_value), 1.0f));
                                 colour_map.insert_or_assign(voxel_value, colour);
+                                values.push_back(voxel_value);
                             }
 
                             empty = false;
@@ -285,6 +288,7 @@ void GridHierarchyRayMarchingRenderer::update_data(VoxelData& data,
                         .layers_data = std::move(layers_data),
                         .voxels = std::move(voxels),
                         .colours = std::move(colours),
+                        .values = values,
                         .model = glm::translate(glm::mat4(1.0f), glm::vec3(chunk.position)),
                         .position = chunk.position,
                     });
@@ -342,9 +346,24 @@ void GridHierarchyRayMarchingRenderer::update_data(VoxelData& data,
         m_chunks.back().model = glm::translate(glm::mat4(1.0f), glm::vec3(chunk.position));
         m_chunks.back().position = chunk.position;
         m_chunks.back().layers = chunk.layer_descriptors.size();
+        m_chunks.back().values = std::vector<VoxelData::Type>(chunk.values.begin(), chunk.values.end());
     }
 
     completion_wait.join();
+}
+
+void GridHierarchyRayMarchingRenderer::update_colour(std::shared_ptr<ITransferFunction> transfer_function) {
+    for (auto& chunk : m_chunks) {
+        std::vector<glm::vec4> new_colours;
+        new_colours.reserve(chunk.values.size());
+
+        for (auto value : chunk.values) {
+            new_colours.push_back(glm::vec4(transfer_function->colour({0, 0, 0}, value), 1.0f));
+        }
+
+        glNamedBufferData(chunk.colour_mapping_buffer, sizeof(glm::vec4) * new_colours.size(), new_colours.data(),
+                          GL_STATIC_READ);
+    }
 }
 
 void GridHierarchyRayMarchingRenderer::clear() {
