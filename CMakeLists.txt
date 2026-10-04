@@ -24,6 +24,7 @@ set(SOURCES
 
     # Transfer functions
     src/transfer_functions/ValueColourMapping.cpp
+    src/transfer_functions/PiecewiseColourMapping.cpp
 
     # Extractors
     src/extractors/NaiveMeshExtractor.cpp

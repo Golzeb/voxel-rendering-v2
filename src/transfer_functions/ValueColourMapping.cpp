@@ -24,3 +24,7 @@ glm::vec3 ValueColourMapping::colour(glm::ivec3 voxel_position, VoxelData::Type 
 
     return m_default_colour;
 }
+
+bool ValueColourMapping::controls() {
+    return false;
+}

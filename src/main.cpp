@@ -8,6 +8,7 @@
 #include "glm/trigonometric.hpp"
 #include "gui/controls.h"
 #include "imgui.h"
+#include "transfer_functions/PiecewiseColourMapping.h"
 #include "utils.h"
 #include "Camera.h"
 #include "config.h"
@@ -44,10 +45,19 @@ int main() {
     appstate.selected_renderer = Renderer::NOOP;
     appstate.current_renderer = std::make_shared<NoopRenderer>();
 
-    auto [data, transfer_function] = loaders::read_vl32("data/bistro_2048x2048x2048.vl32", glm::ivec3{2048, 2048, 2048});
+    // auto [data, transfer_function] = loaders::read_vl32("data/bistro_512x512x512.vl32", glm::ivec3{512, 512, 512});
+    auto data = loaders::read_raw("data/MRbrain_16bit_256x256x109.raw", glm::ivec3{256, 256, 109});
+    std::shared_ptr<PiecewiseColourMapping> transfer_function = std::make_shared<PiecewiseColourMapping>();
+
+    transfer_function->add_point({0.1f, 0.5f, 0.3f}, 32768 + 2500);
+    transfer_function->add_point({0.5f, 0.1f, 0.3f}, 32768 + 2000);
+
     appstate.data = data;
+    appstate.model_origin = data.size() / 2;
     appstate.transfer_function = transfer_function;
-    appstate.mask = std::make_shared<ThresholdMask>(0, true);
+    appstate.mask = std::make_shared<ThresholdMask>(32768 + 2000, true);
+
+    generate_model_matrix(appstate);
 
     Camera camera (glm::perspective(glm::radians(90.0f), float(IMAGE_WIDTH) / float(IMAGE_HEIGHT), 0.1f, 2000.0f), glm::vec2{-89.0, 89.0});
 
@@ -59,6 +69,7 @@ int main() {
 
         handle_camera_input(appstate, camera);
         camera.update();
+        camera.set_model(appstate.model);
 
         glFinish();
         glBeginQuery(GL_TIME_ELAPSED, query);

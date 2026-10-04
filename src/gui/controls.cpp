@@ -11,6 +11,10 @@
 
 #include "App.h"
 #include "GLFW/glfw3.h"
+#include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/vector_float3.hpp"
+#include "glm/fwd.hpp"
+#include "glm/gtc/type_ptr.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -34,6 +38,15 @@ void init(GLFWwindow* window) {
 }
 
 void render(ApplicationState& appstate) {
+    static bool colour_controls = false;
+
+    static bool model_controls = false;
+    static glm::mat4 model = {};
+    static glm::vec3 model_position = {};
+    static glm::vec3 model_origin = {};
+    static glm::vec3 model_rotation = {};
+    static glm::vec3 model_scale = {1.0, 1.0, 1.0};
+
     static std::array<float, 120> gpu_time_collect;
     static std::size_t gpu_time_index = 0;
 
@@ -165,6 +178,34 @@ void render(ApplicationState& appstate) {
     ImGui::LabelText("Peak RAM", "%s", utils::human_readable_size(talloc::max_memory()).c_str());
     ImGui::LabelText("Used VRAM", "%s", utils::human_readable_size(talloc::current_gpu_memory()).c_str());
     ImGui::LabelText("Load time", "%.04fms", appstate.load_time);
+
+    ImGui::Dummy({0, 10});
+
+    ImGui::Checkbox("Colour controls", &colour_controls);
+
+    if (colour_controls) {
+        ImGui::Begin("Colour mapping");
+
+        if (appstate.transfer_function->controls()) {
+        }
+
+        ImGui::End();
+    }
+
+    ImGui::Checkbox("Model controls", &model_controls);
+
+    if (model_controls) {
+        ImGui::Begin("Model");
+
+        if (ImGui::InputFloat3("Position", glm::value_ptr(appstate.model_position)) ||
+            ImGui::InputFloat3("Rotation", glm::value_ptr(appstate.model_rotation)) ||
+            ImGui::InputFloat3("Scale", glm::value_ptr(appstate.model_scale)) ||
+            ImGui::InputFloat3("Origin", glm::value_ptr(appstate.model_origin))) {
+            generate_model_matrix(appstate);
+        }
+
+        ImGui::End();
+    }
 
     ImGui::End();
 
