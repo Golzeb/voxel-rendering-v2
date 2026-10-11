@@ -1,0 +1,11 @@
+{
+    "name": "Bistro (512x512x512)",
+    "file": "bistro_512x512x512.vl32",
+    "format": "vl32",
+    "size": [
+        512,
+        512,
+        512
+    ],
+    "threshold": -1
+}

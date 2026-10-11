@@ -19,7 +19,7 @@ public:
     struct Mode {
         bool sorted = false;
         bool chunked = false;
-        std::int32_t chunk_size = 0;
+        std::int32_t chunk_size = 128;
     };
 
 public:

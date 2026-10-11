@@ -81,6 +81,7 @@ void RasterRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunct
     for (std::size_t i = 0; i < m_meshes.size(); i++) {
         mesh::destroy_mesh(m_meshes[i]);
     }
+    m_meshes.clear();
 
     std::unique_ptr<IVoxelDataProvider> provider;
 

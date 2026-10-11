@@ -52,7 +52,7 @@ VoxelData::Type VoxelData::get_voxel(glm::ivec3 position) const {
     std::size_t const chunk_index =
         chunk_position.x + chunk_position.y * m_size_chunks.x + chunk_position.z * m_size_chunks.x * m_size_chunks.y;
 
-    if (chunk_index > m_chunks.size()) {
+    if (chunk_index >= m_chunks.size()) {
         throw std::runtime_error(std::format("Trying to read past the chunk data ({} {} {}) at ({} {} {})", m_size.x,
                                              m_size.y, m_size.z, position.x, position.y, position.z));
     }

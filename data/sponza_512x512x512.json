@@ -1,0 +1,11 @@
+{
+    "name": "Sponza (512x512x512)",
+    "file": "sponza_512x512x512.vl32",
+    "format": "vl32",
+    "size": [
+        512,
+        512,
+        512
+    ],
+    "threshold": -1
+}

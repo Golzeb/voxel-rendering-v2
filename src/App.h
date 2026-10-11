@@ -1,8 +1,10 @@
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <vector>
 
 // clang-format off
+#include "SceneLoader.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float3.hpp"
@@ -43,6 +45,11 @@ struct ApplicationState {
     glm::vec3 model_origin = {};
     glm::vec3 model_rotation = {0.0f, 0.0f, 0.0f};
     glm::vec3 model_scale = {1.0f, 1.0f, 1.0f};
+
+    std::int32_t selected_scene = 0;
+    SceneLoader scene_loader;
+    bool scene_noise;
+    std::int32_t scene_size = 128;
 
     bool mouse_locked = true;
     glm::vec2 previous_mouse_position = glm::vec2(0.0f);

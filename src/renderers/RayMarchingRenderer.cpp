@@ -104,6 +104,12 @@ void RayMarchingRenderer::deinit() {
 
 void RayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
                                       std::shared_ptr<IMask> mask) {
+    for (auto const& chunk : m_chunks) {
+        glDeleteBuffers(1, &chunk.colour_mapping_buffer);
+        glDeleteBuffers(1, &chunk.voxel_data_buffer);
+    }
+    m_chunks.clear();
+
     std::size_t const lines = std::thread::hardware_concurrency();
 
     tf::Executor executor;

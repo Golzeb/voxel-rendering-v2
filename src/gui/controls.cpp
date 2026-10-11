@@ -4,8 +4,10 @@
 #include <cstddef>
 #include <memory>
 #include <numeric>
+#include <utility>
 
 // clang-format off
+#include "SceneLoader.h"
 #include "allocators/TrackingAllocator.h"
 // clang-format on
 
@@ -167,6 +169,48 @@ void render(ApplicationState& appstate) {
         talloc::reset();
 
         appstate.current_renderer->init();
+
+        auto start = utils::time_start();
+        appstate.current_renderer->update_data(appstate.data, appstate.transfer_function, appstate.mask);
+        appstate.load_time = utils::time_count(start);
+    }
+
+    ImGui::Dummy({0, 10});
+
+    ImGui::Combo("Scene", &appstate.selected_scene, appstate.scene_loader.names(), appstate.scene_loader.count());
+
+    if (appstate.selected_scene < std::to_underlying(SceneLoader::BultinScenes::COUNT)) {
+        switch ((SceneLoader::BultinScenes)appstate.selected_scene) {
+            case SceneLoader::BultinScenes::DEFAULT:
+                break;
+            case SceneLoader::BultinScenes::RANDOM:
+                ImGui::SliderInt("Size", &appstate.scene_size, 128, 2048);
+                break;
+            case SceneLoader::BultinScenes::SPHERE:
+            case SceneLoader::BultinScenes::CUBES:
+            case SceneLoader::BultinScenes::MENGER:
+                ImGui::SliderInt("Size", &appstate.scene_size, 128, 2048);
+                ImGui::Checkbox("Noise", &appstate.scene_noise);
+                break;
+            case SceneLoader::BultinScenes::COUNT:
+                break;
+        }
+    }
+
+    if (ImGui::Button("Load scene")) {
+        auto [data, mask, transfer_function, transform] =
+            appstate.scene_loader.get(appstate.selected_scene, appstate.scene_size, appstate.scene_noise);
+
+        appstate.model_origin = transform.origin;
+        appstate.model_position = transform.position;
+        appstate.model_rotation = transform.rotation;
+        appstate.model_scale = transform.scale;
+
+        generate_model_matrix(appstate);
+
+        appstate.data = data;
+        appstate.mask = mask;
+        appstate.transfer_function = transfer_function;
 
         auto start = utils::time_start();
         appstate.current_renderer->update_data(appstate.data, appstate.transfer_function, appstate.mask);

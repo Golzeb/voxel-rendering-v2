@@ -151,6 +151,14 @@ void GridHierarchyRayMarchingRenderer::deinit() {
 void GridHierarchyRayMarchingRenderer::update_data(VoxelData& data,
                                                    std::shared_ptr<ITransferFunction> transfer_function,
                                                    std::shared_ptr<IMask> mask) {
+    for (auto const& chunk : m_chunks) {
+        glDeleteBuffers(1, &chunk.layer_descriptors_buffer);
+        glDeleteBuffers(1, &chunk.layer_data_buffer);
+        glDeleteBuffers(1, &chunk.voxel_data_buffer);
+        glDeleteBuffers(1, &chunk.colour_mapping_buffer);
+    }
+    m_chunks.clear();
+
     std::size_t const lines = std::thread::hardware_concurrency();
 
     tf::Executor executor;

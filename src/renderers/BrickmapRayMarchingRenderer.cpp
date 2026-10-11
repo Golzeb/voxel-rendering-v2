@@ -103,6 +103,8 @@ void BrickmapRayMarchingRenderer::deinit() {
 
 void BrickmapRayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
                                               std::shared_ptr<IMask> mask) {
+    m_values.clear();
+
     GLint data_size_location = glGetUniformLocation(m_shader_program, "u_data_size");
 
     glm::ivec3 const data_size = glm::ceil(glm::vec3(data.size()) / float(BRICKMAP_SIZE));

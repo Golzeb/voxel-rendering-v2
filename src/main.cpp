@@ -8,16 +8,12 @@
 #include "glm/trigonometric.hpp"
 #include "gui/controls.h"
 #include "imgui.h"
-#include "transfer_functions/PiecewiseColourMapping.h"
 #include "utils.h"
 #include "Camera.h"
 #include "config.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/ext/vector_float3.hpp"
-#include "glm/ext/vector_int3.hpp"
-#include "loaders.h"
-#include "masks/ThresholdMask.h"
 #include "renderers/NoopRenderer.h"
 #include "spdlog/spdlog.h"
 #include "App.h"
@@ -45,19 +41,15 @@ int main() {
     appstate.selected_renderer = Renderer::NOOP;
     appstate.current_renderer = std::make_shared<NoopRenderer>();
 
-    // auto [data, transfer_function] = loaders::read_vl32("data/bistro_2048x2048x2048.vl32", glm::ivec3{2048, 2048, 2048});
-    auto data = loaders::read_raw("data/MRbrain_16bit_256x256x109.raw", glm::ivec3{256, 256, 109});
-    std::shared_ptr<PiecewiseColourMapping> transfer_function = std::make_shared<PiecewiseColourMapping>();
-
-    transfer_function->add_point({0.1f, 0.5f, 0.3f}, 32768 + 2500);
-    transfer_function->add_point({0.5f, 0.1f, 0.3f}, 32768 + 2000);
+    auto [data, mask, transfer_function, transform] = appstate.scene_loader.get(0);
 
     appstate.data = data;
-    appstate.model_origin = data.size() / 2;
+    appstate.mask = mask;
     appstate.transfer_function = transfer_function;
-    appstate.mask = std::make_shared<ThresholdMask>(32768 + 2000, true);
-
-    // appstate.mask = std::make_shared<ThresholdMask>(0, true);
+    appstate.model_origin = transform.origin;
+    appstate.model_position = transform.position;
+    appstate.model_rotation = transform.rotation;
+    appstate.model_scale = transform.scale;
 
     generate_model_matrix(appstate);
 

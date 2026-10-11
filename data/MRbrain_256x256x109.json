@@ -1,0 +1,45 @@
+{
+    "name": "MRbrain (256x256x109)",
+    "file": "MRbrain_16bit_256x256x109.raw",
+    "format": "raw",
+    "size": [
+        256,
+        256,
+        109
+    ],
+    "value_offset": 32768,
+    "threshold": 1500,
+    "colour_map": {
+        "type": "piecewise",
+        "values": [
+            {
+                "value": 2500,
+                "colour": [
+                    0.929,
+                    0.925,
+                    0.675
+                ]
+            },
+            {
+                "value": 1500,
+                "colour": [
+                    0.961,
+                    0.596,
+                    0.459
+                ]
+            }
+        ]
+    },
+    "transform": {
+        "rotation": [
+            0.0,
+            0.0,
+            -90.0
+        ],
+        "origin": [
+            128.0,
+            128.0,
+            54.5
+        ]
+    }
+}

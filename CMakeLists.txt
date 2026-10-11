@@ -14,9 +14,11 @@ set(SOURCES
     src/Camera.cpp
     src/MeshingPipeline.cpp
     src/gui/controls.cpp
+    src/SceneLoader.cpp
 
     # Masks 
     src/masks/ThresholdMask.cpp
+    src/masks/NoopMask.cpp
     
     # Providers
     src/data_providers/FullDataProvider.cpp

@@ -20,7 +20,7 @@ public:
         bool face_culled = false;
         bool greedy_mesh = false;
         bool chunked = false;
-        std::int32_t chunk_size = 0;
+        std::int32_t chunk_size = 64;
     };
 public:
     RasterRenderer(Mode const& mode);

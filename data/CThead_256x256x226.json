@@ -1,0 +1,66 @@
+{
+    "name": "CThead (256x256x226)",
+    "file": "CThead_16bit_256x256x226.raw",
+    "format": "raw",
+    "size": [
+        256,
+        256,
+        226
+    ],
+    "value_offset": 32768,
+    "threshold": 15000,
+    "colour_map": {
+        "type": "piecewise",
+        "values": [
+            {
+                "value": 22000,
+                "colour": [
+                    0.678,
+                    0.678,
+                    0.433
+                ]
+            },
+            {
+                "value": 20000,
+                "colour": [
+                    0.929,
+                    0.925,
+                    0.675
+                ]
+            },
+            {
+                "value": 18000,
+                "colour": [
+                    0.517,
+                    0.0,
+                    0.0
+                ]
+            },
+            {
+                "value": 15000,
+                "colour": [
+                    0.961,
+                    0.596,
+                    0.459
+                ]
+            }
+        ]
+    },
+    "transform": {
+        "rotation": [
+            90.0,
+            0.0,
+            0.0
+        ],
+        "origin": [
+            128.0,
+            128.0,
+            112.5
+        ],
+        "scale": [
+            1.0,
+            1.0,
+            1.0
+        ]
+    }
+}
