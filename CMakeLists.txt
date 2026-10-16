@@ -15,6 +15,7 @@ set(SOURCES
     src/MeshingPipeline.cpp
     src/gui/controls.cpp
     src/SceneLoader.cpp
+    src/Benchmark.cpp
 
     # Masks 
     src/masks/ThresholdMask.cpp

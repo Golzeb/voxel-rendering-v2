@@ -61,8 +61,13 @@ int main() {
     while (!glfwWindowShouldClose(appstate.window)) {
         float const frame_start = glfwGetTime();
 
-        handle_camera_input(appstate, camera);
-        camera.update();
+        if(!appstate.benchmark.is_running()) {
+            handle_camera_input(appstate, camera);
+            camera.update();
+        } else {
+            appstate.benchmark.run(camera);
+        }
+
         camera.set_model(appstate.model);
 
         glFinish();

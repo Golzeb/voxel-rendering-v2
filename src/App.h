@@ -4,6 +4,7 @@
 #include <vector>
 
 // clang-format off
+#include "Benchmark.h"
 #include "SceneLoader.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -74,6 +75,8 @@ struct ApplicationState {
     std::shared_ptr<IRenderer> current_renderer{};
     std::shared_ptr<ITransferFunction> transfer_function{};
     std::shared_ptr<IMask> mask{};
+
+    Benchmark benchmark;
 
     float camera_speed = BASE_CAMERA_SPEED;
 

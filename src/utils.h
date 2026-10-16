@@ -12,6 +12,7 @@
 #include "glm/ext/vector_float2.hpp"
 
 namespace utils {
+using time_point_t = std::chrono::time_point<std::chrono::steady_clock>;
 [[nodiscard]]
 std::string load_shader(std::string_view path);
 
@@ -22,8 +23,8 @@ void check_shader_compilation_errors(GLuint shader_name);
 
 glm::vec2 get_cursor_position(GLFWwindow* window);
 
-[[nodiscard]] std::chrono::time_point<std::chrono::steady_clock> time_start();
+[[nodiscard]] time_point_t time_start();
 
 [[nodiscard]]
-float time_count(std::chrono::time_point<std::chrono::steady_clock> const& start);
+float time_count(time_point_t const& start);
 }  // namespace utils

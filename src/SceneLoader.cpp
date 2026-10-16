@@ -61,9 +61,8 @@ SceneLoader::get_t generate_default_scene() {
     return {data, mask, transfer_function, SceneLoader::SceneTransform{.origin = {1, 1, 1}}};
 }
 
-SceneLoader::get_t generate_random(std::int32_t size) {
-    std::random_device dev;
-    std::mt19937 rng(dev());
+SceneLoader::get_t generate_random(std::int32_t size, std::size_t seed = 0) {
+    std::mt19937 rng(seed);
 
     std::uniform_real_distribution<float> dist(0.0, 1.0);
 

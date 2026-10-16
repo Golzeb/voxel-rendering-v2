@@ -7,11 +7,13 @@
 #include <utility>
 
 // clang-format off
+#include "Benchmark.h"
 #include "SceneLoader.h"
 #include "allocators/TrackingAllocator.h"
 // clang-format on
 
 #include "App.h"
+#include "Benchmark.h"
 #include "GLFW/glfw3.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/vector_float3.hpp"
@@ -198,6 +200,8 @@ void render(ApplicationState& appstate) {
     }
 
     if (ImGui::Button("Load scene")) {
+        talloc::reset();
+
         auto [data, mask, transfer_function, transform] =
             appstate.scene_loader.get(appstate.selected_scene, appstate.scene_size, appstate.scene_noise);
 
@@ -215,6 +219,23 @@ void render(ApplicationState& appstate) {
         auto start = utils::time_start();
         appstate.current_renderer->update_data(appstate.data, appstate.transfer_function, appstate.mask);
         appstate.load_time = utils::time_count(start);
+    }
+
+    ImGui::Dummy({0, 10});
+
+    if (ImGui::Button("Run benchmark")) {
+        appstate.benchmark.start(appstate, {
+                                               Benchmark::Point{
+                                                   .length = 10000,
+                                                   .look_at = {128, 128, 128},
+                                                   .position = {-1, -1, -1},
+                                               },
+                                               Benchmark::Point{
+                                                   .length = 10000,
+                                                   .look_at = {0, 0, 0},
+                                                   .position{256, 256, 0},
+                                               },
+                                           });
     }
 
     ImGui::Dummy({0, 10});
