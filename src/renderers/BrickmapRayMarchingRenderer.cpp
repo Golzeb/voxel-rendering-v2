@@ -160,10 +160,10 @@ void BrickmapRayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<I
 
                 brickmaps[brickmap_index - 1].set(glm::ivec3{chunk_x, chunk_y, chunk_z});
                 if (colour_map.contains(voxel_value)) {
-                    brickmap_colours[brickmap_index - 1].push_back(colour_map[voxel_value]);
+                    brickmap_colours[brickmap_index].push_back(colour_map[voxel_value]);
                 } else {
                     colour_map.insert({voxel_value, colours.size()});
-                    brickmap_colours[brickmap_index - 1].push_back(colour_map[voxel_value]);
+                    brickmap_colours[brickmap_index].push_back(colour_map[voxel_value]);
                     colours.push_back(glm::vec4(transfer_function->colour(glm::ivec3{x, y, z}, voxel_value), 1.0f));
                     m_values.push_back(voxel_value);
                 }
@@ -174,7 +174,7 @@ void BrickmapRayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<I
     tracked_vector<std::uint32_t> brickmap_colours_vector;
 
     for (auto const& [k, v] : brickmap_colours) {
-        brickmaps[k].colour_pointer = brickmap_colours_vector.size();
+        brickmaps[k - 1].colour_pointer = brickmap_colours_vector.size();
         brickmap_colours_vector.insert(brickmap_colours_vector.end(), v.begin(), v.end());
     }
 
