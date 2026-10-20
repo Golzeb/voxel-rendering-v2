@@ -28,6 +28,7 @@
 #include "renderers/NoopRenderer.h"
 #include "renderers/RasterRenderer.h"
 #include "renderers/RayMarchingRenderer.h"
+#include "renderers/SVORayMarchingRenderer.h"
 #include "utils.h"
 
 namespace gui {
@@ -163,6 +164,9 @@ void render(ApplicationState& appstate) {
                 break;
             case Renderer::BRICKMAP_RAY_MARCHING:
                 appstate.current_renderer = std::make_shared<BrickmapRayMarchingRenderer>();
+                break;
+            case Renderer::SVO_RAY_MARCHING:
+                appstate.current_renderer = std::make_shared<SVORayMarchingRenderer>();
                 break;
             case Renderer::COUNT:
                 break;

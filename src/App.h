@@ -34,6 +34,7 @@ enum class Renderer : int {
     RAY_MARCHING,
     GRID_HIERARCHY_RAY_MARCHING,
     BRICKMAP_RAY_MARCHING,
+    SVO_RAY_MARCHING,
     COUNT,
 };
 
@@ -61,7 +62,8 @@ struct ApplicationState {
                                             "Instanced raster renderer",
                                             "Ray marching renderer",
                                             "Grid hierarchy ray marching renderer",
-                                            "Brickmap ray marching renderer"};
+                                            "Brickmap ray marching renderer",
+                                            "SVO ray marching renderer"};
 
     bool back_face_culling = false;
     bool wireframe = false;

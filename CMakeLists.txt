@@ -45,6 +45,7 @@ set(SOURCES
     src/renderers/RayMarchingRenderer.cpp
     src/renderers/GridHierarchyRayMarchingRenderer.cpp
     src/renderers/BrickmapRayMarchingRenderer.cpp
+    src/renderers/SVORayMarchingRenderer.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

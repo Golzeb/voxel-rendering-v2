@@ -6,6 +6,7 @@
 #include <atomic>
 #include <bit>
 #include <cstddef>
+#include <deque>
 #include <functional>
 #include <stdexcept>
 #include <unordered_map>
@@ -78,3 +79,6 @@ using tracked_vector = std::vector<T, TrackingAllocator<T>>;
 
 template <typename K, typename V>
 using tracked_umap = std::unordered_map<K, V, std::hash<K>, std::equal_to<K>, TrackingAllocator<std::pair<K const, V>>>;
+
+template <typename T>
+using tracked_deque = std::deque<T, TrackingAllocator<T>>;
