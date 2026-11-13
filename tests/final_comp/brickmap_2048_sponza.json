@@ -1,0 +1,8 @@
+{
+    "renderer": "brickmap",
+    "scene_name": "Sponza (2048x2048x2048)",
+    "scene_size": 2048,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {}
+}

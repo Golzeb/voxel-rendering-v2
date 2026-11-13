@@ -7,5 +7,7 @@
         512,
         512
     ],
-    "threshold": -1
+    "threshold": -1,
+    "path_scale": 2.0,
+    "path_file": "bistro.json"
 }

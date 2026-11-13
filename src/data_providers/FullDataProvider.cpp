@@ -20,10 +20,6 @@ std::optional<IVoxelDataProvider::VoxelDataChunk> FullDataProvider::next() {
 
     return IVoxelDataProvider::VoxelDataChunk{
         .position = glm::ivec3(0),
-        .data = *p_data,
+        .data = p_data->view(glm::ivec3(0), p_data->size()),
     };
-}
-
-void FullDataProvider::reset() {
-    m_read = false;
 }

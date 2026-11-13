@@ -1,0 +1,8 @@
+{
+    "renderer": "brickmap",
+    "scene_name": "Cubes",
+    "scene_size": 512,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {}
+}

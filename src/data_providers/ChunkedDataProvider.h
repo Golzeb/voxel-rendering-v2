@@ -13,7 +13,6 @@ public:
     ~ChunkedDataProvider() override = default;
 
     std::optional<VoxelDataChunk> next() override;
-    void reset() override;
 
 private:
     glm::ivec3 m_size;

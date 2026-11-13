@@ -10,7 +10,6 @@ public:
     ~FullDataProvider() override = default;
 
     std::optional<VoxelDataChunk> next() override;
-    void reset() override;
 
 private:
     bool m_read;

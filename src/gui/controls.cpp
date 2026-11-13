@@ -2,20 +2,25 @@
 
 #include <array>
 #include <cstddef>
+#include <fstream>
+#include <glaze/core/context.hpp>
+#include <glaze/forward.hpp>
+#include <glaze/json/read.hpp>
 #include <memory>
 #include <numeric>
+#include <string>
 #include <utility>
 
 // clang-format off
-#include "Benchmark.h"
 #include "SceneLoader.h"
 #include "allocators/TrackingAllocator.h"
 // clang-format on
 
 #include "App.h"
 #include "Benchmark.h"
+#include "Camera.h"
 #include "GLFW/glfw3.h"
-#include "glm/ext/matrix_float4x4.hpp"
+#include "glaze/json/write.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/fwd.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -44,13 +49,7 @@ void init(GLFWwindow* window) {
 
 void render(ApplicationState& appstate) {
     static bool colour_controls = false;
-
     static bool model_controls = false;
-    static glm::mat4 model = {};
-    static glm::vec3 model_position = {};
-    static glm::vec3 model_origin = {};
-    static glm::vec3 model_rotation = {};
-    static glm::vec3 model_scale = {1.0, 1.0, 1.0};
 
     static std::array<float, 120> gpu_time_collect;
     static std::size_t gpu_time_index = 0;
@@ -82,8 +81,8 @@ void render(ApplicationState& appstate) {
 
     ImGui::Dummy({0, 10});
 
-    if (ImGui::Checkbox("Back face culling", &appstate.back_face_culling)) {
-        if (appstate.back_face_culling) {
+    if (ImGui::Checkbox("Back face culling", &appstate.backface_culling)) {
+        if (appstate.backface_culling) {
             glEnable(GL_CULL_FACE);
         } else {
             glDisable(GL_CULL_FACE);
@@ -122,12 +121,13 @@ void render(ApplicationState& appstate) {
     }
 
     if (appstate.selected_renderer == Renderer::RAY_MARCHING) {
-        ImGui::Checkbox("Chunked", &appstate.ray_marching_renderer_mode.chunked);
+        ImGui::Checkbox("Culled", &appstate.ray_marching_renderer_mode.culled);
+        if (appstate.ray_marching_renderer_mode.culled) {
+            ImGui::Checkbox("Chunked", &appstate.ray_marching_renderer_mode.chunked);
 
-        if (appstate.ray_marching_renderer_mode.chunked) {
-            ImGui::SliderInt("Chunk size", &appstate.ray_marching_renderer_mode.chunk_size, 0, 512);
-
-            ImGui::Checkbox("Sorted", &appstate.ray_marching_renderer_mode.sorted);
+            if (appstate.ray_marching_renderer_mode.chunked) {
+                ImGui::SliderInt("Chunk size", &appstate.ray_marching_renderer_mode.chunk_size, 0, 512);
+            }
         }
     }
 
@@ -136,8 +136,6 @@ void render(ApplicationState& appstate) {
 
         if (appstate.grid_hierarchy_ray_marching_renderer_mode.chunked) {
             ImGui::SliderInt("Chunk size", &appstate.grid_hierarchy_ray_marching_renderer_mode.chunk_size, 0, 2048);
-
-            ImGui::Checkbox("Sorted", &appstate.grid_hierarchy_ray_marching_renderer_mode.sorted);
         }
     }
 
@@ -206,9 +204,11 @@ void render(ApplicationState& appstate) {
     if (ImGui::Button("Load scene")) {
         talloc::reset();
 
-        auto [data, mask, transfer_function, transform] =
+        auto [data, mask, transfer_function, transform, points] =
             appstate.scene_loader.get(appstate.selected_scene, appstate.scene_size, appstate.scene_noise);
 
+        appstate.benchmark_points = points.points;
+        appstate.benchmark_scale = points.scale;
         appstate.model_origin = transform.origin;
         appstate.model_position = transform.position;
         appstate.model_rotation = transform.rotation;
@@ -228,25 +228,38 @@ void render(ApplicationState& appstate) {
     ImGui::Dummy({0, 10});
 
     if (ImGui::Button("Run benchmark")) {
-        appstate.benchmark.start(appstate, {
-                                               Benchmark::Point{
-                                                   .length = 10000,
-                                                   .look_at = {128, 128, 128},
-                                                   .position = {-1, -1, -1},
-                                               },
-                                               Benchmark::Point{
-                                                   .length = 10000,
-                                                   .look_at = {0, 0, 0},
-                                                   .position{256, 256, 0},
-                                               },
-                                           });
+        appstate.benchmark.start(appstate, appstate.benchmark_points, appstate.benchmark_scale);
+    }
+
+    if (ImGui::Button("Add benchmark point")) {
+        appstate.benchmark_points.push_back({
+            .length = 0,
+            .look_at = appstate.camera->position() + appstate.camera->forward(),
+            .position = appstate.camera->position(),
+        });
+    }
+
+    if (ImGui::Button("Export points")) {
+        for (std::size_t i = 0; i < appstate.benchmark_points.size(); i++) {
+            // Dwuminutowe testy dla 60 fps
+            appstate.benchmark_points[i].length = 7200 / appstate.benchmark_points.size();
+        }
+
+        std::string buffer = glz::write_json(appstate.benchmark_points).value_or("error");
+        std::ofstream out("path.json");
+        out.write(buffer.c_str(), buffer.size());
+        out.close();
+    }
+
+    if (ImGui::Button("Clear points")) {
+        appstate.benchmark_points.clear();
     }
 
     ImGui::Dummy({0, 10});
 
     ImGui::LabelText("Peak RAM", "%s", utils::human_readable_size(talloc::max_memory()).c_str());
     ImGui::LabelText("Used VRAM", "%s", utils::human_readable_size(talloc::current_gpu_memory()).c_str());
-    ImGui::LabelText("Load time", "%.04fms", appstate.load_time);
+    ImGui::LabelText("Load time", "%.04fs", appstate.load_time);
 
     ImGui::Dummy({0, 10});
 

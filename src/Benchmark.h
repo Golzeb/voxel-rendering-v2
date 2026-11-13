@@ -19,15 +19,15 @@ public:
     struct Stats {
         float average_frame_time;
         float average_load_time;
-        float vram_usage;
-        float ram_usage;
+        std::size_t vram_usage;
+        std::size_t ram_usage;
     };
 
 public:
     Benchmark() = default;
     ~Benchmark() = default;
 
-    void start(ApplicationState& appstate, std::vector<Point> const& points);
+    void start(ApplicationState& appstate, std::vector<Point> const& points, float scale = 1.0f);
     void run(Camera& camera);
 
     bool is_running();
@@ -40,6 +40,8 @@ private:
     std::size_t m_frame_total;
     std::size_t m_index;
     bool m_running = false;
+
+    float m_scale;
 
     Stats m_stats;
 };

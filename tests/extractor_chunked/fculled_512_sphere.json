@@ -1,0 +1,14 @@
+{
+    "renderer": "raster",
+    "scene_name": "Sphere",
+    "scene_size": 512,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {
+        "indexed": false,
+        "face_culled": true,
+        "greedy_mesh": false,
+        "chunked": true,
+        "chunk_size": 64
+    }
+}

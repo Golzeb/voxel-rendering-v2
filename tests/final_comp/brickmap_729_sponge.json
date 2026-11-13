@@ -1,0 +1,8 @@
+{
+    "renderer": "brickmap",
+    "scene_name": "Menger sponge",
+    "scene_size": 729,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {}
+}

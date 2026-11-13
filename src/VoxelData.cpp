@@ -8,6 +8,7 @@
 #include "glm/common.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/ext/vector_int3.hpp"
+#include "glm/vector_relational.hpp"
 
 VoxelData::VoxelData(glm::ivec3 const& size, bool full) {
     m_size = size;
@@ -69,6 +70,32 @@ VoxelData::Type VoxelData::get_voxel(glm::ivec3 position) const {
     return chunk.voxels.at(voxel_index);
 }
 
+VoxelData::View VoxelData::view(glm::ivec3 start, glm::ivec3 size) const {
+    return VoxelData::View(*this, start, size);
+}
+
 glm::ivec3 VoxelData::size() const {
+    return m_size;
+}
+
+VoxelData::View::View(VoxelData const& data, glm::ivec3 start, glm::ivec3 size) {
+    p_data = &data;
+    m_start = start;
+    m_size = size;
+}
+
+VoxelData::Type VoxelData::View::get_voxel(glm::ivec3 position) const {
+    if (glm::any(glm::greaterThanEqual(position, m_size))) {
+        throw std::runtime_error("Trying to read past view");
+    }
+
+    if (glm::any(glm::greaterThanEqual(position + m_start, p_data->size()))) {
+        return std::numeric_limits<VoxelData::Type>::min();
+    }
+
+    return p_data->get_voxel(position + m_start);
+}
+
+glm::ivec3 VoxelData::View::size() const {
     return m_size;
 }

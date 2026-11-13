@@ -178,7 +178,6 @@ vec4 get_ray_color(vec3 direction, vec3 origin) {
         }
 
         while(layer != MAX_DEPTH && layer_voxel(layer, current_position)) {
-
             entry_position = current_position;
 
             layer += 1;
@@ -195,7 +194,7 @@ vec4 get_ray_color(vec3 direction, vec3 origin) {
 
         if(layer == MAX_DEPTH) {
             uint voxel = grid_voxel(current_position);
-            float depth = length(u_camera_origin - vec3(current_position + 0.5f));
+            float depth = length(u_camera_origin - vec3(intersect));
 
             if(depth >= depth_buffer.data[int(gl_FragCoord.x) + int(gl_FragCoord.y) * 1920]) {
                 discard;

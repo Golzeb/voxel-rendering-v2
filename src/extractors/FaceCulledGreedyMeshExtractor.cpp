@@ -69,6 +69,7 @@ std::optional<Mesh> FaceCulledGreedyMeshExtractor::extract_mesh(IVoxelDataProvid
             tracked_vector<VoxelData::Type> voxel_types;
             voxel_types.resize(mask_size);
 
+            // Generowanie maski widocznych wokseli
             for (current_pos[dim] = -1; current_pos[dim] < data_size[dim];) {
                 std::int32_t n = 0;
                 for (current_pos[v] = 0; current_pos[v] < data_size[v]; current_pos[v]++) {

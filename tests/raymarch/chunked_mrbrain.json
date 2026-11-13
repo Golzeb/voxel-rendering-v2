@@ -1,0 +1,12 @@
+{
+    "renderer": "raymarch",
+    "scene_name": "MRbrain (256x256x109)",
+    "scene_size": 0,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {
+        "culled": true,
+        "chunked": true,
+        "chunk_size": 128
+    }
+}

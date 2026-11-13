@@ -19,7 +19,6 @@
 class GridHierarchyRayMarchingRenderer : public IRenderer {
 public:
     struct Mode {
-        bool sorted = false;
         bool chunked = false;
         std::int32_t chunk_size = 256;
     };

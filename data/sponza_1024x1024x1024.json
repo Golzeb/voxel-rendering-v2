@@ -7,5 +7,7 @@
         1024,
         1024
     ],
-    "threshold": -1
+    "threshold": -1,
+    "path_scale": 4.0,
+    "path_file": "sponza.json"
 }

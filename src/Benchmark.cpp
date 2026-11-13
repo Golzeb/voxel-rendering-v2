@@ -13,16 +13,18 @@
 #include "spdlog/spdlog.h"
 #include "utils.h"
 
-void Benchmark::start(ApplicationState& appstate, std::vector<Point> const& points) {
-    constexpr std::size_t ITERS = 5;
+void Benchmark::start(ApplicationState& appstate, std::vector<Point> const& points, float scale) {
+    constexpr std::size_t ITERS = 50;
     m_running = true;
     m_points = points;
     m_current_frame = 0;
     m_frame_total = 0;
     m_index = 0;
+    m_scale = scale;
 
     auto const start = utils::time_start();
     for (std::size_t i = 0; i < ITERS; i++) {
+        talloc::current_gpu_memory() = 0;
         appstate.current_renderer->update_data(appstate.data, appstate.transfer_function, appstate.mask);
     }
     float const load_time = utils::time_count(start);
@@ -43,8 +45,8 @@ void Benchmark::run(Camera& camera) {
 
     if (m_current_frame < m_points[m_index].length) {
         if (m_index == 0 && m_current_frame == 0) {
-            camera.set_position(m_points[m_index].position);
-            glm::vec3 const diff = glm::normalize(m_points[m_index].look_at - camera.position());
+            camera.set_position(m_points[m_index].position * m_scale);
+            glm::vec3 const diff = glm::normalize(m_points[m_index].look_at - m_points[m_index].position);
 
             float const pitch = glm::degrees(std::asin(-diff.y));
             float const yaw = glm::degrees(std::atan2(diff.x, diff.z));
@@ -75,8 +77,8 @@ void Benchmark::run(Camera& camera) {
     }
 
     m_current_frame = 0;
-    camera.set_position(m_points[m_index].position);
-    glm::vec3 const diff = glm::normalize(m_points[m_index].look_at - camera.position());
+    camera.set_position(m_points[m_index].position * m_scale);
+    glm::vec3 const diff = glm::normalize(m_points[m_index].look_at - m_points[m_index].position);
 
     float const pitch = glm::degrees(std::asin(-diff.y));
     float const yaw = glm::degrees(std::atan2(diff.x, diff.z));

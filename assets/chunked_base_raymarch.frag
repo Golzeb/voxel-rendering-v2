@@ -91,7 +91,7 @@ vec4 get_ray_color(vec3 direction, vec3 origin) {
 
         uint voxel = (voxel_grid.voxels[index / 2] >> shift) & uint(0xFFFF);
 
-        float depth = length(u_camera_origin - vec3(current_position + 0.5f));
+        float depth = length(u_camera_origin - vec3(current_position));
         if(depth >= depth_buffer.data[int(gl_FragCoord.x) + int(gl_FragCoord.y) * 1920]) {
             discard;
         }

@@ -1,0 +1,12 @@
+{
+    "renderer": "raymarch",
+    "scene_name": "Random",
+    "scene_size": 512,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {
+        "culled": false,
+        "chunked": false,
+        "chunk_size": 0
+    }
+}

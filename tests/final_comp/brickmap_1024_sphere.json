@@ -1,0 +1,8 @@
+{
+    "renderer": "brickmap",
+    "scene_name": "Sphere",
+    "scene_size": 1024,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {}
+}

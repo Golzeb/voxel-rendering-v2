@@ -48,7 +48,7 @@ std::string human_readable_size(std::size_t size) {
 void check_shader_compilation_errors(GLuint shader_name) {
     std::int32_t read_length;
 
-    std::array<char, 512> info_log{};
+    std::array<char, 2048> info_log{};
     glGetShaderInfoLog(shader_name, info_log.size(), &read_length, info_log.data());
 
     std::int32_t success;

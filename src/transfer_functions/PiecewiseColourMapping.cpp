@@ -25,7 +25,7 @@ void PiecewiseColourMapping::add_point(glm::vec3 const& colour, VoxelData::Type 
 }
 
 glm::vec3 PiecewiseColourMapping::colour(glm::ivec3 voxel_position, VoxelData::Type voxel_value) {
-    std::size_t closest_lower = 0;
+    std::optional<std::size_t> closest_lower = std::nullopt;
     std::optional<std::size_t> closest_higher = std::nullopt;
 
     std::int32_t closest_higher_distance = std::numeric_limits<std::int32_t>::max();
@@ -55,18 +55,18 @@ glm::vec3 PiecewiseColourMapping::colour(glm::ivec3 voxel_position, VoxelData::T
     }
 
     if (!closest_higher.has_value()) {
-        return m_points[closest_lower].colour;
+        return m_points[closest_lower.value()].colour;
     }
 
-    if (closest_higher == closest_lower) {
-        return m_points[closest_lower].colour;
+    if (!closest_lower.has_value()) {
+        return m_points[closest_higher.value()].colour;
     }
 
     Point const& higher = m_points[closest_higher.value()];
-    Point const& lower = m_points[closest_lower];
+    Point const& lower = m_points[closest_lower.value()];
 
     std::int32_t distance = higher.point - lower.point;
-    float alpha = (voxel_value - lower.point) / float(distance);
+    float const alpha = (voxel_value - lower.point) / float(distance);
 
     return lower.colour * (1.0f - alpha) + higher.colour * alpha;
 }

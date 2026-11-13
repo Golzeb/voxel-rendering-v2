@@ -106,7 +106,7 @@ void InstancedRasterRenderer::init() {
         GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
         GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 
-        std::string fragment_source = utils::load_shader("assets/instanced_raster.frag");
+        std::string fragment_source = utils::load_shader("assets/base_raster.frag");
         std::string vertex_source = utils::load_shader("assets/instanced_raster.vert");
 
         char const* c_fragment_source = fragment_source.c_str();

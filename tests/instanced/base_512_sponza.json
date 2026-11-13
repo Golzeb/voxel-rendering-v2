@@ -1,0 +1,11 @@
+{
+    "renderer": "instanced",
+    "scene_name": "Sponza (512x512x512)",
+    "scene_size": 512,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {
+        "face_culled": false,
+        "indexed": false
+    }
+}

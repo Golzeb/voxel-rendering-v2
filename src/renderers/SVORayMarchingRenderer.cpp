@@ -39,7 +39,7 @@ struct SparseVoxelOctree {
     struct Node {
         std::uint32_t mask;              // [ 16             | 8             | 8         ]
                                          // [ children count | children_mask | leaf_mask ]
-        std::uint32_t children_pointer;  // Either colour or something
+        std::uint32_t children_pointer;  // Colour pointer or children pointer
 
         void set_child(std::size_t index) {
             mask |= 0x1 << (index + 8);

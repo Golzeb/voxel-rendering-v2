@@ -59,7 +59,7 @@ vec3 start_position(vec3 direction, vec3 origin) {
     vec3 tmin = min(t0, t1);
     float max_tmin = max(max(tmin.x, tmin.y), tmin.z);
 
-    return (max_tmin + 1e-4) * direction + origin;
+    return (max_tmin + 1e-2) * direction + origin;
 }
 
 uint child_mask_index(ivec3 position) {
@@ -108,6 +108,10 @@ uint leaf_index(uint node, ivec3 position) {
     return index;
 }
 
+ivec3 round_multiple(ivec3 val, int multiple) {
+    return val + ivec3(multiple) - (val % ivec3(multiple));
+}
+
 vec4 get_ray_color(vec3 direction, vec3 origin) {
     if(should_cull(direction, origin)) {
         return vec4(0.2f, 0.2f, 0.2f, 1.0f);
@@ -145,14 +149,10 @@ vec4 get_ray_color(vec3 direction, vec3 origin) {
 
     vec3 intersect = current_origin * current_block_size;
     uint layer = 0;
-
-    uint parent_node[16];
-    ivec3 entry_position[16];
     
     if(all(greaterThanEqual(current_position, ivec3(0, 0, 0))) && all(lessThan(current_position, u_data_size))) {
         while(is_child_set(current_node, current_position) && current_block_size != 1) {
             layer += 1;
-            parent_node[layer] = current_node;
 
             uint index = child_index(current_node, current_position);
             current_node = nodes.data[current_node].children_pointer + index;
@@ -163,57 +163,53 @@ vec4 get_ray_color(vec3 direction, vec3 origin) {
 
             tdelta = abs(1.0f / current_direction);
 
-            current_position = ivec3(floor(current_origin + vec3(step) * 1e-5));
+            current_position = ivec3(floor(current_origin));
             tmax = (current_position - current_origin + max(step, 0)) / current_direction;
-            current_position = (current_position % 2) * sign(current_position);
+            current_position = ivec3(mod(current_position, 2));
         }
     }
 
     bool exit = false;
 
     for(int i = 0; i < 512; ++i) {
-        bool in_bounds = all(greaterThanEqual(current_position, ivec3(0, 0, 0))) && all(lessThan(current_position, ivec3(2)));
+        bool in_bounds = all(greaterThanEqual(current_position, ivec3(0))) && all(lessThan(current_position, ivec3(2)));
 
         if(!in_bounds && layer == 0) {
-             return vec4(1.2f, 0.2f, 0.2f, 1.0f);
+             return vec4(0.2f, 0.2f, 0.2f, 1.0f);
         }
 
-        while(exit && layer != 0) {
-            current_node = parent_node[layer];
+        if(exit) {
+            current_node = 0;
+            layer = 0;
 
-            layer -= 1;
-
-            current_block_size *= 2;
-            current_origin = intersect / current_block_size;
+            current_block_size = u_data_size.x / 2;
             current_direction = direction_original / current_block_size;
+            current_origin = intersect / current_block_size;
 
             tdelta = abs(1.0f / current_direction);
 
-            current_position = ivec3(floor(current_origin + vec3(step) * 1e-5));
+            current_position = ivec3(floor(current_origin));
             tmax = (current_position - current_origin + max(step, 0)) / current_direction;
-
             in_bounds = all(greaterThanEqual(current_position, ivec3(0))) && all(lessThan(current_position, ivec3(2)));
 
-            exit = layer != 0;
+            exit = false;
         }
 
-        while(is_child_set(current_node, current_position) && current_block_size != 1 && in_bounds) {
+        while(is_child_set(current_node, current_position) && current_block_size > 1 && in_bounds) {
             layer += 1;
-            parent_node[layer] = current_node;
-            entry_position[layer] = current_position;
 
             uint index = child_index(current_node, current_position);
             current_node = nodes.data[current_node].children_pointer + index;
 
             current_block_size /= 2;
-            current_origin = intersect / current_block_size;
             current_direction = direction_original / current_block_size;
+            current_origin = intersect / current_block_size;
 
             tdelta = abs(1.0f / current_direction);
 
-            current_position = ivec3(floor(current_origin + vec3(step) * 1e-5));
+            current_position = ivec3(floor(current_origin));
             tmax = (current_position - current_origin + max(step, 0)) / current_direction;
-            current_position = (current_position % 2) * sign(current_position);
+            current_position = ivec3(mod(current_position, 2));
         }
 
         if(is_leaf_set(current_node, current_position)) {
@@ -222,14 +218,14 @@ vec4 get_ray_color(vec3 direction, vec3 origin) {
         }
 
         float previous_t = min(min(tmax.x, tmax.y), tmax.z);
-        intersect = (current_origin + current_direction * previous_t) * current_block_size;
+        intersect = (current_origin + current_direction * previous_t + step * 1e-4) * current_block_size;
 
         mask = lessThanEqual(tmax.xyz, min(tmax.yzx, tmax.zxy));
 
         current_position += step * ivec3(mask);
         tmax += tdelta * vec3(mask);
 
-        exit = !(all(greaterThanEqual(current_position, ivec3(0, 0, 0))) && all(lessThan(current_position, ivec3(2))));
+        exit = !(all(greaterThanEqual(current_position, ivec3(0))) && all(lessThan(current_position, ivec3(2))));
     }
 
 

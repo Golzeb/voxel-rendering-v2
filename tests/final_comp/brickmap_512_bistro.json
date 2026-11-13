@@ -1,0 +1,8 @@
+{
+    "renderer": "brickmap",
+    "scene_name": "Bistro (512x512x512)",
+    "scene_size": 512,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {}
+}

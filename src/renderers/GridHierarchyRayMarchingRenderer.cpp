@@ -1,6 +1,7 @@
 #include "GridHierarchyRayMarchingRenderer.h"
 
 #include <algorithm>
+#include <cmath>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -46,7 +47,7 @@ struct Layer {
     void init(glm::ivec3 previous_size) {
         size = glm::ceil(glm::vec3(previous_size) / (float)SCALE);
 
-        data.resize(size.x * size.y * size.z, 0);
+        data.resize(std::ceil(size.x * size.y * size.z / 32.0f), 0);
     }
 
     void set(glm::ivec3 position) {
@@ -385,7 +386,7 @@ void GridHierarchyRayMarchingRenderer::clear() {
 void GridHierarchyRayMarchingRenderer::render(Camera const& camera) {
     glm::dmat4 inv_vp = glm::inverse(camera.vp());
 
-    if (m_mode.chunked && m_mode.sorted) {
+    if (m_mode.chunked) {
         std::sort(m_chunks.begin(), m_chunks.end(), [&](UploadedChunk const& a, UploadedChunk const& b) {
             return glm::length(camera.position() - a.position) < glm::length(camera.position() - b.position);
         });

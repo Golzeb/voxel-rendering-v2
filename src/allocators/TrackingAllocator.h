@@ -1,19 +1,22 @@
 #pragma once
 // clang-format off
 #include "glad/gl.h"
+#include "utils.h"
 // clang-format on
 
 #include <atomic>
 #include <bit>
 #include <cstddef>
 #include <deque>
+#include <format>
 #include <functional>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-constexpr std::size_t KILL_SWITCH = 22;
+// 28 GiB
+constexpr std::size_t KILL_SWITCH = std::size_t{28} * std::size_t{1024} * std::size_t{1024} * std::size_t{1024};
 
 namespace talloc {
 inline std::size_t& current_gpu_memory() {
@@ -60,8 +63,9 @@ public:
     value_type* allocate(std::size_t n) {
         void* data = ::operator new(n * sizeof(value_type));
         talloc::current_memory() += n * sizeof(value_type);
-        if (talloc::current_memory() > std::size_t(KILL_SWITCH) * 1024 * 1024 * 1024)
-            throw std::runtime_error("Memory usage higher than 22 GiB");
+        if (talloc::current_memory() > KILL_SWITCH)
+            throw std::runtime_error(
+                std::format("Memory usage higher than {}", utils::human_readable_size(KILL_SWITCH)));
         if (talloc::current_memory() > talloc::max_memory()) talloc::max_memory().store(talloc::current_memory());
         return static_cast<value_type*>(data);
     }

@@ -174,7 +174,6 @@ vec4 get_ray_color(vec3 direction, vec3 origin) {
         }
 
         while(layer != MAX_DEPTH && layer_voxel(layer, current_position)) {
-
             entry_position = current_position;
 
             layer += 1;

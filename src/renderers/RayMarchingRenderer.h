@@ -17,7 +17,7 @@
 class RayMarchingRenderer : public IRenderer {
 public:
     struct Mode {
-        bool sorted = false;
+        bool culled = true;
         bool chunked = false;
         std::int32_t chunk_size = 128;
     };

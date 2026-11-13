@@ -8,12 +8,11 @@ class IVoxelDataProvider {
 public:
     struct VoxelDataChunk {
         glm::ivec3 position;
-        VoxelData data;
+        VoxelData::View data;
     };
 
 public:
     virtual ~IVoxelDataProvider() = default;
 
     virtual std::optional<VoxelDataChunk> next() = 0;
-    virtual void reset() = 0;
 };

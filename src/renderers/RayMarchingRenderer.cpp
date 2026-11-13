@@ -47,10 +47,14 @@ void RayMarchingRenderer::init() {
         GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 
         std::string fragment_source;
-        if (m_mode.chunked) {
-            fragment_source = utils::load_shader("assets/chunked_base_raymarch.frag");
+        if (m_mode.culled) {
+            if (m_mode.chunked) {
+                fragment_source = utils::load_shader("assets/chunked_base_raymarch.frag");
+            } else {
+                fragment_source = utils::load_shader("assets/base_raymarch.frag");
+            }
         } else {
-            fragment_source = utils::load_shader("assets/base_raymarch.frag");
+            fragment_source = utils::load_shader("assets/base_raymarch_nocull.frag");
         }
         std::string vertex_source = utils::load_shader("assets/base_raymarch.vert");
 
@@ -291,13 +295,13 @@ void RayMarchingRenderer::clear() {
 }
 
 void RayMarchingRenderer::render(Camera const& camera) {
-    glm::dmat4 inv_vp = glm::inverse(camera.vp());
-
-    if (m_mode.chunked && m_mode.sorted) {
+    if (m_mode.chunked) {
         std::sort(m_chunks.begin(), m_chunks.end(), [&](UploadedChunk const& a, UploadedChunk const& b) {
             return glm::length(camera.position() - a.position) < glm::length(camera.position() - b.position);
         });
     }
+
+    glm::dmat4 inv_vp = glm::inverse(camera.vp());
 
     float pixel_delta_width = -1.0f - ((1.0f / IMAGE_WIDTH) * 2.0f - 1.0f);
     float pixel_delta_height = 1.0f - ((1.0f - (1.0f / IMAGE_HEIGHT)) * 2.0f - 1.0f);

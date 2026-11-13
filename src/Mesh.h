@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <vector>
 
 #include "VoxelData.h"
 #include "allocators/TrackingAllocator.h"
@@ -53,7 +54,7 @@ struct Mesh {
     tracked_vector<Vertex> vertices;
     tracked_vector<std::uint32_t> indices;
     tracked_vector<glm::vec4> colours;
-    tracked_vector<VoxelData::Type> values;
+    std::vector<VoxelData::Type> values;
 };
 
 struct UploadedMesh {
@@ -64,7 +65,7 @@ struct UploadedMesh {
     std::size_t count;
 
     GLuint colour_buffer;
-    tracked_vector<VoxelData::Type> values;
+    std::vector<VoxelData::Type> values;
 };
 
 namespace mesh {

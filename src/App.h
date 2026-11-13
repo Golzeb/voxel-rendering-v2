@@ -5,6 +5,7 @@
 
 // clang-format off
 #include "Benchmark.h"
+#include "Camera.h"
 #include "SceneLoader.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -41,6 +42,10 @@ enum class Renderer : int {
 struct ApplicationState {
     GLFWwindow* window;
 
+    bool benchmark_mode;
+
+    Camera* camera;
+
     VoxelData data;
     glm::mat4 model = glm::identity<glm::mat4>();
     glm::vec3 model_position = {0.0f, 0.0f, 0.0f};
@@ -65,7 +70,7 @@ struct ApplicationState {
                                             "Brickmap ray marching renderer",
                                             "SVO ray marching renderer"};
 
-    bool back_face_culling = false;
+    bool backface_culling = false;
     bool wireframe = false;
 
     RasterRenderer::Mode raster_renderer_mode;
@@ -79,6 +84,8 @@ struct ApplicationState {
     std::shared_ptr<IMask> mask{};
 
     Benchmark benchmark;
+    std::vector<Benchmark::Point> benchmark_points;
+    float benchmark_scale;
 
     float camera_speed = BASE_CAMERA_SPEED;
 

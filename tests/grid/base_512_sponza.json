@@ -1,0 +1,11 @@
+{
+    "renderer": "grid",
+    "scene_name": "Sponza (512x512x512)",
+    "scene_size": 512,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {
+        "chunked": false,
+        "chunk_size": 0
+    }
+}

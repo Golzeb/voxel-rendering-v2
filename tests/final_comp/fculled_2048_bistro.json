@@ -1,0 +1,14 @@
+{
+    "renderer": "raster",
+    "scene_name": "Bistro (2048x2048x2048)",
+    "scene_size": 2048,
+    "noise": false,
+    "backface_culling": true,
+    "mode": {
+        "indexed": true,
+        "face_culled": true,
+        "greedy_mesh": false,
+        "chunked": true,
+        "chunk_size": 64
+    }
+}

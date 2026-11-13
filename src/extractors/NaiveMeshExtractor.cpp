@@ -25,7 +25,7 @@ std::optional<Mesh> NaiveMeshExtractor::extract_mesh(IVoxelDataProvider::VoxelDa
 
     glm::ivec3 const size = chunk.data.size();
 
-    VoxelData const& data = chunk.data;
+    VoxelData::View const& data = chunk.data;
 
     for (std::size_t x = 0; x < size.x; x++) {
         for (std::size_t y = 0; y < size.y; y++) {

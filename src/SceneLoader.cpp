@@ -1,17 +1,26 @@
 #include "SceneLoader.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <format>
 #include <fstream>
+#include <glaze/core/context.hpp>
 #include <glaze/core/istream_buffer.hpp>
+#include <glaze/forward.hpp>
 #include <glaze/json/read.hpp>
+#include <glaze/json/write.hpp>
 #include <limits>
 #include <memory>
 #include <random>
+#include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
+#include "Benchmark.h"
 #include "VoxelData.h"
 #include "glm/common.hpp"
 #include "glm/ext/vector_float3.hpp"
@@ -47,7 +56,7 @@ void add_noise(VoxelData& data, std::shared_ptr<IMask> mask, std::int32_t max, f
 }
 
 SceneLoader::get_t generate_default_scene() {
-    auto mask = std::make_shared<ThresholdMask>(0, true);
+    auto mask = std::make_shared<ThresholdMask>(0);
     auto transfer_function = std::make_shared<ValueColourMapping>();
 
     transfer_function->set_colour(1, glm::vec3{1.0f, 1.0f, 1.0f});
@@ -58,7 +67,28 @@ SceneLoader::get_t generate_default_scene() {
     data.set_voxel(glm::ivec3{0, 0, 0}, 1);
     data.set_voxel(glm::ivec3{1, 1, 1}, 2);
 
-    return {data, mask, transfer_function, SceneLoader::SceneTransform{.origin = {1, 1, 1}}};
+    return {
+        data,
+        mask,
+        transfer_function,
+        SceneLoader::SceneTransform{.origin = {1, 1, 1}},
+        {
+            .points =
+                {
+                    {
+                        .length = 3600,
+                        .look_at = glm::vec3{1.0f, 1.0f, 1.0f},
+                        .position = glm::vec3{1.0f, 10.0f, 10.0f},
+                    },
+                    {
+                        .length = 3600,
+                        .look_at = glm::vec3{1.0f, 1.0f, 1.0f},
+                        .position = glm::vec3{1.0f, 1.0f, 10.0f},
+                    },
+                },
+            .scale = 1.0f,
+        },
+    };
 }
 
 SceneLoader::get_t generate_random(std::int32_t size, std::size_t seed = 0) {
@@ -66,7 +96,7 @@ SceneLoader::get_t generate_random(std::int32_t size, std::size_t seed = 0) {
 
     std::uniform_real_distribution<float> dist(0.0, 1.0);
 
-    auto mask = std::make_shared<ThresholdMask>(0, true);
+    auto mask = std::make_shared<ThresholdMask>(0);
     auto transfer_function = std::make_shared<PiecewiseColourMapping>();
 
     transfer_function->add_point(glm::vec3{0.1f, 0.1f, 0.1f}, 0);
@@ -84,13 +114,31 @@ SceneLoader::get_t generate_random(std::int32_t size, std::size_t seed = 0) {
         }
     }
 
-    return {data, mask, transfer_function,
-            SceneLoader::SceneTransform{.origin = {size / 2.0f, size / 2.0f, size / 2.0f}}};
+    std::ifstream file("paths/cuboid.json");
+    glz::basic_istream_buffer<std::ifstream> buffer(file);
+
+    std::vector<Benchmark::Point> points;
+    auto ec = glz::read_json<std::vector<Benchmark::Point>>(points, buffer);
+
+    if (ec) {
+        spdlog::error("{} (code: {})", ec.custom_error_message, std::to_underlying(ec.ec));
+    }
+
+    return {
+        data,
+        mask,
+        transfer_function,
+        SceneLoader::SceneTransform{.origin = {size / 2.0f, size / 2.0f, size / 2.0f}},
+        {
+            .points = points,
+            .scale = size / 128.0f,
+        },
+    };
 }
 
 SceneLoader::get_t generate_menger_sponge(std::int32_t size, VoxelData::Type empty_value, VoxelData::Type fill_value,
                                           bool noise) {
-    auto mask = std::make_shared<ThresholdMask>(empty_value, true);
+    auto mask = std::make_shared<ThresholdMask>(empty_value);
     auto transfer_function = std::make_shared<PiecewiseColourMapping>();
 
     transfer_function->add_point(glm::vec3{0.549f, 0.545f, 0.141f}, empty_value);
@@ -143,15 +191,33 @@ SceneLoader::get_t generate_menger_sponge(std::int32_t size, VoxelData::Type emp
 
     if (noise) add_noise(data, mask, (fill_value - empty_value) / 10, 0.2f);
 
-    return {data, mask, transfer_function,
-            SceneLoader::SceneTransform{.origin = {size / 2.0f, size / 2.0f, size / 2.0f}}};
+    std::ifstream file("paths/sponge.json");
+    glz::basic_istream_buffer<std::ifstream> buffer(file);
+
+    std::vector<Benchmark::Point> points;
+    auto ec = glz::read_json<std::vector<Benchmark::Point>>(points, buffer);
+
+    if (ec) {
+        spdlog::error("{} (code: {})", ec.custom_error_message, std::to_underlying(ec.ec));
+    }
+
+    return {
+        data,
+        mask,
+        transfer_function,
+        SceneLoader::SceneTransform{.origin = {size / 2.0f, size / 2.0f, size / 2.0f}},
+        {
+            .points = points,
+            .scale = size / 243.0f,
+        },
+    };
 }
 
 SceneLoader::get_t generate_sphere(std::int32_t size, VoxelData::Type outer_value, VoxelData::Type core_value,
                                    bool noise = false, std::size_t seed = 0) {
     std::mt19937 rng(seed);
 
-    auto mask = std::make_shared<ThresholdMask>(outer_value, true);
+    auto mask = std::make_shared<ThresholdMask>(outer_value);
     auto transfer_function = std::make_shared<PiecewiseColourMapping>();
 
     VoxelData data(glm::ivec3{size, size, size});
@@ -184,8 +250,26 @@ SceneLoader::get_t generate_sphere(std::int32_t size, VoxelData::Type outer_valu
 
     if (noise) add_noise(data, mask, (core_value - outer_value) / 10, 0.2f);
 
-    return {data, mask, transfer_function,
-            SceneLoader::SceneTransform{.origin = {size / 2.0f, size / 2.0f, size / 2.0f}}};
+    std::ifstream file("paths/sphere.json");
+    glz::basic_istream_buffer<std::ifstream> buffer(file);
+
+    std::vector<Benchmark::Point> points;
+    auto ec = glz::read_json<std::vector<Benchmark::Point>>(points, buffer);
+
+    if (ec) {
+        spdlog::error("{} (code: {})", ec.custom_error_message, std::to_underlying(ec.ec));
+    }
+
+    return {
+        data,
+        mask,
+        transfer_function,
+        SceneLoader::SceneTransform{.origin = {size / 2.0f, size / 2.0f, size / 2.0f}},
+        {
+            .points = points,
+            .scale = size / 128.0f,
+        },
+    };
 }
 
 SceneLoader::get_t generate_random_cubes(std::int32_t size, std::size_t cube_count, std::size_t max_size,
@@ -193,7 +277,7 @@ SceneLoader::get_t generate_random_cubes(std::int32_t size, std::size_t cube_cou
                                          std::size_t seed = 0) {
     std::mt19937 rng(seed);
 
-    auto mask = std::make_shared<ThresholdMask>(min_value, true);
+    auto mask = std::make_shared<ThresholdMask>(min_value);
     auto transfer_function = std::make_shared<PiecewiseColourMapping>();
 
     transfer_function->add_point(glm::vec3{rng() % 1024 / 1024.0f, rng() % 1024 / 1024.0f, rng() % 1024 / 1024.0f},
@@ -222,8 +306,26 @@ SceneLoader::get_t generate_random_cubes(std::int32_t size, std::size_t cube_cou
 
     if (noise) add_noise(data, mask, (max_value - min_value) / 10, 0.2f);
 
-    return {data, mask, transfer_function,
-            SceneLoader::SceneTransform{.origin = {size / 2.0f, size / 2.0f, size / 2.0f}}};
+    std::ifstream file("paths/cuboid.json");
+    glz::basic_istream_buffer<std::ifstream> buffer(file);
+
+    std::vector<Benchmark::Point> points;
+    auto ec = glz::read_json<std::vector<Benchmark::Point>>(points, buffer);
+
+    if (ec) {
+        spdlog::error("{} (code: {})", ec.custom_error_message, std::to_underlying(ec.ec));
+    }
+
+    return {
+        data,
+        mask,
+        transfer_function,
+        SceneLoader::SceneTransform{.origin = {size / 2.0f, size / 2.0f, size / 2.0f}},
+        {
+            .points = points,
+            .scale = size / 128.0f,
+        },
+    };
 }
 
 };  // namespace builtin
@@ -265,7 +367,7 @@ SceneLoader::get_t SceneLoader::get(std::int32_t index, std::int32_t size, bool 
             case BultinScenes::SPHERE:
                 return builtin::generate_sphere(size, 0, 2000, noise);
             case BultinScenes::CUBES:
-                return builtin::generate_random_cubes(size, size * 2, size / 4, 0, 2000, noise);
+                return builtin::generate_random_cubes(size, size, size / 8, 0, 2000, noise);
             case BultinScenes::COUNT:
                 break;
         }
@@ -282,12 +384,12 @@ SceneLoader::get_t SceneLoader::get(std::int32_t index, std::int32_t size, bool 
     if (scene.format == "vl32") {
         auto [_data, _transfer_function] =
             loaders::read_vl32("data/" + scene.file, glm::ivec3{scene.size[0], scene.size[1], scene.size[2]});
-        mask = std::make_shared<ThresholdMask>(0, true);
+        mask = std::make_shared<ThresholdMask>(0);
         data = _data;
         transfer_function = _transfer_function;
     } else {
         auto _data = loaders::read_raw("data/" + scene.file, glm::ivec3{scene.size[0], scene.size[1], scene.size[2]});
-        mask = std::make_shared<ThresholdMask>(scene.threshold + scene.value_offset, true);
+        mask = std::make_shared<ThresholdMask>(scene.threshold + scene.value_offset);
         data = _data;
 
         if (scene.colour_map.type == "piecewise") {
@@ -316,7 +418,35 @@ SceneLoader::get_t SceneLoader::get(std::int32_t index, std::int32_t size, bool 
     transform.scale = {scene.transform.scale[0], scene.transform.scale[1], scene.transform.scale[2]};
     transform.position = {scene.transform.position[0], scene.transform.position[1], scene.transform.position[2]};
 
-    return {data, mask, transfer_function, transform};
+    std::vector<Benchmark::Point> points;
+    if (scene.path_file != "") {
+        std::ifstream file(std::format("paths/{}", scene.path_file));
+        glz::basic_istream_buffer<std::ifstream> buffer(file);
+
+        auto ec = glz::read_json<std::vector<Benchmark::Point>>(points, buffer);
+
+        if (ec) {
+            spdlog::error("{} (code: {})", ec.custom_error_message, std::to_underlying(ec.ec));
+        }
+    }
+
+    return {data,
+            mask,
+            transfer_function,
+            transform,
+            {
+                .points = points,
+                .scale = scene.path_scale,
+            }};
+}
+
+std::int32_t SceneLoader::get_id_by_name(std::string const& name) const {
+    for (std::int32_t i = 0; i < m_names.size(); i++) {
+        if (name == m_names[i]) return i;
+    }
+
+    throw std::runtime_error("Failed to get id by name");
+    return -1;
 }
 
 char const* const* SceneLoader::names() const {

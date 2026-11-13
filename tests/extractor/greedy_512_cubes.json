@@ -1,0 +1,14 @@
+{
+    "renderer": "raster",
+    "scene_name": "Cubes",
+    "scene_size": 512,
+    "noise": false,
+    "backface_culling": false,
+    "mode": {
+        "indexed": false,
+        "face_culled": false,
+        "greedy_mesh": true,
+        "chunked": false,
+        "chunk_size": 0
+    }
+}

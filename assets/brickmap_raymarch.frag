@@ -9,25 +9,30 @@ uniform vec3 u_delta_height;
 uniform vec3 u_camera_origin;
 
 const int BRICK_SIZE = 8;
+const int SUPERGRID_SIZE = 8;
 
 struct Brick {
     uint voxels[BRICK_SIZE * BRICK_SIZE * BRICK_SIZE / 32];
     uint colour_pointer;
 };
 
-layout(std430, binding = 0) readonly buffer Brickgrid {
+layout(std430, binding = 0) readonly buffer Supergrid {
+    uint grid[];
+} supergrid;
+
+layout(std430, binding = 1) readonly buffer Brickgrid {
     uint grid[];
 } brickgrid;
 
-layout(std430, binding = 1) readonly buffer Brickmap {
+layout(std430, binding = 2) readonly buffer Brickmap {
     Brick bricks[];
 } brickmap;
 
-layout(std430, binding = 2) readonly buffer Colour {
+layout(std430, binding = 3) readonly buffer Colour {
     uint map[];
 } colours;
 
-layout(std430, binding = 3) readonly buffer ColourMapping {
+layout(std430, binding = 4) readonly buffer ColourMapping {
     vec4 data[];
 } colour_map;
 
@@ -46,8 +51,8 @@ bool should_cull(vec3 direction, vec3 origin) {
     return max_tmin > min_tmax || (max_tmin < 0 && min_tmax < 0);
 }
 
-int position_to_index(ivec3 position) {
-    return position.x + (position.y * u_data_size.x) + (position.z * u_data_size.x * u_data_size.y);
+int position_to_index(ivec3 position, ivec3 size) {
+    return position.x + (position.y * size.x) + (position.z * size.x * size.y);
 }
 
 ivec3 init_step(vec3 direction) {
@@ -82,11 +87,11 @@ vec4 voxel_colour(uint brick_pointer, ivec3 voxel_position) {
     return colour_map.data[colours.map[colour_pointer]];
 }
 
-vec3 start_position(vec3 direction, vec3 origin) {
+vec3 start_position(vec3 direction, vec3 origin, ivec3 size) {
     vec3 inv_direction = 1.0f / direction;
 
     vec3 t0 = (-origin) * inv_direction;
-    vec3 t1 = (u_data_size - origin) * inv_direction;
+    vec3 t1 = (size - origin) * inv_direction;
 
     vec3 tmin = min(t0, t1);
     float max_tmin = max(max(tmin.x, tmin.y), tmin.z);
@@ -126,17 +131,13 @@ vec4 trace_brick(uint brick_pointer, vec3 direction, vec3 origin) {
     return vec4(0.3f, 0.3f, 1.0f, 1.0f);
 }
 
-vec4 trace_world(vec3 direction, vec3 origin) {
-    if(should_cull(direction, origin)) {
-        return vec4(0.2f, 0.2f, 0.2f, 1.0f);
-    }
-
+vec4 trace_world(vec3 direction, vec3 origin, ivec3 superchunk_position) {
     direction = direction / BRICK_SIZE;
     origin = origin / BRICK_SIZE;
 
     ivec3 current_position = ivec3(floor(origin));
     if(any(lessThan(current_position, ivec3(0, 0, 0))) || any(greaterThanEqual(current_position, u_data_size))) {
-        origin = start_position(direction, origin);
+        origin = start_position(direction, origin, u_data_size);
     }
 
     vec3 inv_direction = 1.0f / direction;
@@ -150,13 +151,14 @@ vec4 trace_world(vec3 direction, vec3 origin) {
 
     bvec3 mask = bvec3(false, false, false);
 
-    for(int i = 0; i < 512; i++) {
+    for(int i = 0; i < SUPERGRID_SIZE * 3; i++) {
         bool in_bounds = all(greaterThanEqual(current_position, ivec3(0, 0, 0))) && all(lessThan(current_position, u_data_size));
-        if(!in_bounds) {
-            return vec4(0.2f, 0.2f, 0.2f, 1.0f);
+
+        if(!in_bounds || current_position / SUPERGRID_SIZE != superchunk_position) {
+            return vec4(0.2f, 0.2f, 0.2f, 0.0f);
         }
 
-        uint brick = brickgrid.grid[position_to_index(current_position)];
+        uint brick = brickgrid.grid[position_to_index(current_position, u_data_size)];
 
         if(brick != 0) {
             vec3 temp = tmax - vec3(mask) * tdelta;
@@ -181,6 +183,68 @@ vec4 trace_world(vec3 direction, vec3 origin) {
         tmax += tdelta * vec3(mask);
     }
 
+    return vec4(0.2f, 0.2f, 0.2f, 0.0f);
+}
+
+vec4 trace_supergrid(vec3 direction, vec3 origin) {
+    if(should_cull(direction, origin)) {
+        return vec4(0.2f, 0.2f, 0.2f, 1.0f);
+    }
+
+    direction = direction / (BRICK_SIZE * SUPERGRID_SIZE);
+    origin = origin / (BRICK_SIZE * SUPERGRID_SIZE);
+
+    ivec3 supergrid_data_size = ivec3(ceil(vec3(u_data_size) / SUPERGRID_SIZE));
+
+    ivec3 current_position = ivec3(floor(origin));
+    if(any(lessThan(current_position, ivec3(0, 0, 0))) || any(greaterThanEqual(current_position, supergrid_data_size))) {
+        origin = start_position(direction, origin, supergrid_data_size);
+    }
+
+    vec3 inv_direction = 1.0f / direction;
+    vec3 step = vec3(init_step(direction));
+
+    vec3 tdelta = abs(inv_direction);
+
+    current_position = ivec3(floor(origin));
+
+    vec3 tmax = (current_position - origin + max(step, 0)) * inv_direction;
+
+    bvec3 mask = lessThanEqual(tmax.xyz, min(tmax.yzx, tmax.zxy));
+
+    for(int i = 0; i < 128; i++) {
+        bool in_bounds = all(greaterThanEqual(current_position, ivec3(0, 0, 0))) && all(lessThan(current_position, supergrid_data_size));
+
+        if(!in_bounds) {
+            return vec4(0.2f, 0.2f, 0.2f, 1.0f);
+        }
+
+        uint index = position_to_index(current_position, supergrid_data_size);
+
+        uint val = (supergrid.grid[index / 32] >> (index % 32)) & 0x1;
+
+        if(val != 0) {
+            vec3 temp = tmax - vec3(mask) * tdelta;
+            float previous_t = min(min(temp.x, temp.y), temp.z);
+            vec3 intersect = origin + direction * previous_t + step * 1e-5;
+
+            if(current_position == floor(origin)) {
+                intersect = origin;
+            }
+
+            vec4 colour = trace_world(normalize(direction), intersect * (BRICK_SIZE * SUPERGRID_SIZE), current_position);
+
+            if(colour.w > 0.95) {
+                return colour;
+            }
+        }
+
+        mask = lessThanEqual(tmax.xyz, min(tmax.yzx, tmax.zxy));
+
+        current_position += ivec3(step * vec3(mask));
+        tmax += tdelta * vec3(mask);
+    }
+
     return vec4(0.2f, 0.2f, 0.2f, 1.0f);
 }
 
@@ -188,5 +252,5 @@ void main() {
     vec3 world_position = u_upper_left + gl_FragCoord.x * u_delta_width + gl_FragCoord.y * u_delta_height;
     vec3 direction = normalize(world_position - u_camera_origin);
 
-    frag_color = trace_world(direction, u_camera_origin);
+    frag_color = trace_supergrid(direction, u_camera_origin);
 }

@@ -1,16 +1,23 @@
 #include "BrickmapRayMarchingRenderer.h"
 
 #include <array>
+#include <cmath>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
+#include <utility>
 #include <vector>
 
 #include "Camera.h"
 #include "VoxelData.h"
 #include "allocators/TrackingAllocator.h"
 #include "config.h"
+#include "data_providers/ChunkedDataProvider.h"
+#include "data_providers/IVoxelDataProvider.h"
 #include "glm/common.hpp"
 #include "glm/ext/matrix_double4x4.hpp"
 #include "glm/ext/vector_double4.hpp"
@@ -20,10 +27,14 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/matrix.hpp"
 #include "masks/IMask.h"
+#include "taskflow/algorithm/pipeline.hpp"
+#include "taskflow/core/executor.hpp"
+#include "taskflow/core/taskflow.hpp"
 #include "transfer_functions/ITransferFunction.h"
 #include "utils.h"
 
 constexpr std::int32_t BRICKMAP_SIZE = 8;
+constexpr std::int32_t SUPERGRID_SIZE = 8;
 
 struct Brickmap {
     std::array<std::uint32_t, BRICKMAP_SIZE * BRICKMAP_SIZE * BRICKMAP_SIZE / 32> data;
@@ -40,6 +51,12 @@ struct Brickmap {
 
         return (data[index >> 5] & (1 << (index & 0x1F)));
     }
+};
+
+struct BrickmapData {
+    Brickmap brickmap;
+    glm::ivec3 position;
+    tracked_vector<VoxelData::Type> voxel_values;
 };
 
 void BrickmapRayMarchingRenderer::init() {
@@ -84,6 +101,7 @@ void BrickmapRayMarchingRenderer::init() {
 
     glCreateBuffers(1, &m_brickmap_buffer);
     glCreateBuffers(1, &m_brickgrid_buffer);
+    glCreateBuffers(1, &m_supergrid_buffer);
     glCreateBuffers(1, &m_colour_mapping_buffer);
     glCreateBuffers(1, &m_voxel_colour_bufffer);
 }
@@ -95,6 +113,7 @@ void BrickmapRayMarchingRenderer::deinit() {
 
     glDeleteBuffers(1, &m_brickmap_buffer);
     glDeleteBuffers(1, &m_brickgrid_buffer);
+    glDeleteBuffers(1, &m_supergrid_buffer);
     glDeleteBuffers(1, &m_colour_mapping_buffer);
     glDeleteBuffers(1, &m_voxel_colour_bufffer);
 
@@ -104,6 +123,11 @@ void BrickmapRayMarchingRenderer::deinit() {
 void BrickmapRayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<ITransferFunction> transfer_function,
                                               std::shared_ptr<IMask> mask) {
     m_values.clear();
+
+    std::size_t const lines = std::thread::hardware_concurrency();
+
+    tf::Executor executor;
+    tf::Taskflow taskflow;
 
     GLint data_size_location = glGetUniformLocation(m_shader_program, "u_data_size");
 
@@ -116,73 +140,140 @@ void BrickmapRayMarchingRenderer::update_data(VoxelData& data, std::shared_ptr<I
 
     talloc::glNamedBufferData(m_vbo, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+    std::shared_ptr<IVoxelDataProvider> provider = std::make_shared<ChunkedDataProvider>(data, BRICKMAP_SIZE);
+
+    tracked_vector<IVoxelDataProvider::VoxelDataChunk> data_chunks;
+    data_chunks.resize(lines);
+
+    tracked_vector<BrickmapData> brickmap_data;
+
+    std::mutex chunks_mutex;
+    std::condition_variable c;
+
+    tf::Pipeline pipeline{
+        lines,
+        tf::Pipe{
+            tf::PipeType::SERIAL,
+            [&](tf::Pipeflow& pf) {
+                auto v = provider->next();
+                if (!v) {
+                    pf.stop();
+                    return;
+                }
+
+                data_chunks[pf.line()] = v.value();
+            },
+        },
+        tf::Pipe{
+            tf::PipeType::PARALLEL,
+            [&](tf::Pipeflow& pf) {
+                IVoxelDataProvider::VoxelDataChunk chunk = std::move(data_chunks[pf.line()]);
+                data_chunks[pf.line()] = {};
+
+                bool empty = true;
+                BrickmapData data{};
+                data.position = chunk.position / BRICKMAP_SIZE;
+
+                for (std::size_t z = 0; z < chunk.data.size().z; z++) {
+                    for (std::size_t y = 0; y < chunk.data.size().y; y++) {
+                        for (std::size_t x = 0; x < chunk.data.size().x; x++) {
+                            VoxelData::Type const voxel_value = chunk.data.get_voxel(glm::ivec3{x, y, z});
+
+                            if (!mask->is_visible(glm::ivec3{x, y, z} + chunk.position, voxel_value)) {
+                                continue;
+                            }
+
+                            data.brickmap.set(glm::ivec3{x, y, z});
+                            data.voxel_values.push_back(voxel_value);
+                            empty = false;
+                        }
+                    }
+                }
+
+                if (!empty) {
+                    std::lock_guard lock(chunks_mutex);
+                    brickmap_data.push_back(std::move(data));
+                    c.notify_one();
+                }
+            },
+        },
+    };
+
+    taskflow.composed_of(pipeline);
+    auto future = executor.run(taskflow);
+
+    bool producer_done = false;
+
+    std::thread completion_wait([&] {
+        future.wait();
+
+        {
+            std::lock_guard lock(chunks_mutex);
+            producer_done = true;
+        }
+
+        c.notify_one();
+    });
+
     tracked_vector<Brickmap> brickmaps;
     tracked_vector<std::uint32_t> brickgrid;
     brickgrid.resize(data_size.x * data_size.y * data_size.z, 0);
 
     tracked_vector<glm::vec4> colours;
     tracked_umap<VoxelData::Type, std::uint32_t> colour_map;
-    tracked_umap<std::uint32_t, tracked_vector<std::uint32_t>> brickmap_colours;
+    tracked_vector<std::uint32_t> brickmap_colours;
 
-    std::size_t brick_id = 1;
+    glm::ivec3 supergrid_size = glm::ceil(glm::vec3(data_size) / float(SUPERGRID_SIZE));
 
-    for (std::size_t z = 0; z < data.size().z; z++) {
-        for (std::size_t y = 0; y < data.size().y; y++) {
-            for (std::size_t x = 0; x < data.size().x; x++) {
-                VoxelData::Type const voxel_value = data.get_voxel(glm::ivec3{x, y, z});
+    tracked_vector<std::uint32_t> supergrid;
+    supergrid.resize(std::ceil(supergrid_size.x * supergrid_size.y * supergrid_size.z / 32.0f), 0);
 
-                if (!mask->is_visible(glm::ivec3{x, y, z}, voxel_value)) {
-                    continue;
-                }
+    while (true) {
+        BrickmapData brickmap;
+        {
+            std::unique_lock lock(chunks_mutex);
+            c.wait(lock, [&] { return producer_done || !brickmap_data.empty(); });
 
-                std::size_t const chunk_x = x % BRICKMAP_SIZE;
-                std::size_t const chunk_y = y % BRICKMAP_SIZE;
-                std::size_t const chunk_z = z % BRICKMAP_SIZE;
+            if (brickmap_data.empty() && producer_done) break;
 
-                std::size_t const brick_x = x / BRICKMAP_SIZE;
-                std::size_t const brick_y = y / BRICKMAP_SIZE;
-                std::size_t const brick_z = z / BRICKMAP_SIZE;
+            brickmap = std::move(brickmap_data.back());
+            brickmap_data.pop_back();
+        }
 
-                std::size_t const brickgrid_index =
-                    brick_x + brick_y * data_size.x + brick_z * data_size.x * data_size.y;
+        brickmap.brickmap.colour_pointer = brickmap_colours.size();
 
-                std::size_t brickmap_index = brickgrid[brickgrid_index];
-
-                if (brickmap_index == 0) {
-                    brickgrid[brickgrid_index] = brick_id;
-
-                    brickmaps.push_back(Brickmap{});
-                    brickmap_colours.insert({brick_id, {}});
-                    brickmap_index = brick_id;
-
-                    brick_id += 1;
-                }
-
-                brickmaps[brickmap_index - 1].set(glm::ivec3{chunk_x, chunk_y, chunk_z});
-                if (colour_map.contains(voxel_value)) {
-                    brickmap_colours[brickmap_index].push_back(colour_map[voxel_value]);
-                } else {
-                    colour_map.insert({voxel_value, colours.size()});
-                    brickmap_colours[brickmap_index].push_back(colour_map[voxel_value]);
-                    colours.push_back(glm::vec4(transfer_function->colour(glm::ivec3{x, y, z}, voxel_value), 1.0f));
-                    m_values.push_back(voxel_value);
-                }
+        for (auto voxel_value : brickmap.voxel_values) {
+            if (colour_map.contains(voxel_value)) {
+                brickmap_colours.push_back(colour_map.at(voxel_value));
+            } else {
+                colour_map.insert({voxel_value, colours.size()});
+                brickmap_colours.push_back(colours.size());
+                colours.push_back(glm::vec4(transfer_function->colour(glm::ivec3(0), voxel_value), 1.0f));
+                m_values.push_back(voxel_value);
             }
         }
+
+        brickmaps.push_back(brickmap.brickmap);
+        std::size_t const brickgrid_index =
+            brickmap.position.x + brickmap.position.y * data_size.x + brickmap.position.z * data_size.x * data_size.y;
+
+        glm::ivec3 const supergrid_position = brickmap.position / SUPERGRID_SIZE;
+        std::size_t const supergrid_index = supergrid_position.x + supergrid_position.y * supergrid_size.x +
+                                            supergrid_position.z * supergrid_size.x * supergrid_size.y;
+
+        supergrid[supergrid_index / 32] |= 1 << (supergrid_index % 32);
+        brickgrid[brickgrid_index] = brickmaps.size();
     }
 
-    tracked_vector<std::uint32_t> brickmap_colours_vector;
+    completion_wait.join();
 
-    for (auto const& [k, v] : brickmap_colours) {
-        brickmaps[k - 1].colour_pointer = brickmap_colours_vector.size();
-        brickmap_colours_vector.insert(brickmap_colours_vector.end(), v.begin(), v.end());
-    }
-
+    talloc::glNamedBufferData(m_supergrid_buffer, sizeof(std::uint32_t) * supergrid.size(), supergrid.data(),
+                              GL_STATIC_READ);
     talloc::glNamedBufferData(m_brickgrid_buffer, sizeof(std::uint32_t) * brickgrid.size(), brickgrid.data(),
                               GL_STATIC_READ);
     talloc::glNamedBufferData(m_brickmap_buffer, sizeof(Brickmap) * brickmaps.size(), brickmaps.data(), GL_STATIC_READ);
-    talloc::glNamedBufferData(m_voxel_colour_bufffer, sizeof(std::uint32_t) * brickmap_colours_vector.size(),
-                              brickmap_colours_vector.data(), GL_STATIC_READ);
+    talloc::glNamedBufferData(m_voxel_colour_bufffer, sizeof(std::uint32_t) * brickmap_colours.size(),
+                              brickmap_colours.data(), GL_STATIC_READ);
     talloc::glNamedBufferData(m_colour_mapping_buffer, sizeof(glm::vec4) * colours.size(), colours.data(),
                               GL_STATIC_READ);
 }
@@ -235,10 +326,11 @@ void BrickmapRayMarchingRenderer::render(Camera const& camera) {
     glUseProgram(m_shader_program);
     glBindVertexArray(m_vao);
 
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_brickgrid_buffer);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_brickmap_buffer);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_voxel_colour_bufffer);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_colour_mapping_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_supergrid_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_brickgrid_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_brickmap_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_voxel_colour_bufffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, m_colour_mapping_buffer);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }

@@ -43,6 +43,7 @@ private:
 
     GLuint m_brickmap_buffer;
     GLuint m_brickgrid_buffer;
+    GLuint m_supergrid_buffer;
     GLuint m_voxel_colour_bufffer;
     GLuint m_colour_mapping_buffer;
 };
